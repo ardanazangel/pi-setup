@@ -1,0 +1,24 @@
+{
+  "asyncByDefault": false,
+  "maxSubagentDepth": 3,
+  "parallel": {
+    "concurrency": 4,
+    "maxTasks": 20
+  },
+  "chain": {
+    "dynamicFanout": {
+      "maxItems": 20
+    }
+  },
+  "control": {
+    "enabled": true,
+    "needsAttentionAfterMs": 120000,
+    "activeNoticeAfterMs": 240000,
+    "failedToolAttemptsBeforeAttention": 3,
+    "notifyOn": ["active_long_running", "needs_attention"],
+    "notifyChannels": ["event", "async", "intercom"]
+  },
+  "intercomBridge": {
+    "mode": "auto"
+  }
+}

@@ -1,0 +1,35 @@
+node_modules/
+**/node_modules/
+.DS_Store
+
+# Sensible
+agent/auth.json
+agent/.env
+agent/mcp-oauth/
+agent/telegram.json
+
+# Runtime / cache
+agent/locks.json
+agent/mcp-cache.json
+agent/mcp-npx-cache.json
+agent/mcp-onboarding.json
+agent/run-history.jsonl
+agent/sessions/
+agent/tmp/
+agent/intercom/
+agent/git/
+agent/bin/
+agent/packages/
+agent/npm/
+
+# context-mode runtime
+context-mode/
+memory/
+pi-acp/
+scheduler/
+session-search/
+
+# misc
+**/*.log
+package-lock.json
+**/package-lock.json

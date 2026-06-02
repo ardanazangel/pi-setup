@@ -1,0 +1,44 @@
+{
+  "extensions": [
+    "~/.pi/agent/extensions/ascii-banner.ts",
+    "~/.pi/agent/extensions/web-fetch.ts",
+    "~/.pi/agent/extensions/web-search.ts",
+    "~/.pi/agent/extensions/youtube-transcript.ts",
+    "~/.pi/agent/extensions/questionnaire.ts",
+    "~/.pi/agent/extensions/tps-meter.ts"
+  ],
+  "defaultModel": "claude-sonnet-4-6",
+  "defaultProvider": "anthropic",
+  "defaultThinkingLevel": "low",
+  "editorPaddingX": 2,
+  "enableInstallTelemetry": false,
+  "hideThinkingBlock": true,
+  "lastChangelogVersion": "0.78.0",
+  "memory": {
+    "consolidationModel": "anthropic/claude-sonnet-4-6"
+  },
+  "subagents": {
+    "agentOverrides": {
+      "reviewer": {
+        "model": "anthropic/claude-sonnet-4-6",
+        "thinking": "high",
+        "fallbackModels": [
+          "anthropic/claude-haiku-4-5"
+        ]
+      }
+    }
+  },
+  "packages": [
+    "npm:context-mode",
+    "npm:pi-total-recall",
+    "npm:pi-subagents",
+    "npm:pi-intercom",
+    "npm:pi-mcp-adapter",
+    "npm:@spences10/pi-themes"
+  ],
+  "theme": "one-dark",
+  "terminal": {
+    "showTerminalProgress": true,
+    "imageWidthCells": 80
+  }
+}
