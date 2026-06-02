@@ -33,12 +33,12 @@
     "npm:pi-total-recall",
     "npm:pi-subagents",
     "npm:pi-intercom",
-    "npm:pi-mcp-adapter",
-    "npm:@spences10/pi-themes"
+    "npm:pi-mcp-adapter"
   ],
   "theme": "github-dark-default",
   "terminal": {
     "showTerminalProgress": true,
     "imageWidthCells": 80
-  }
+  },
+  "plugins": []
 }
