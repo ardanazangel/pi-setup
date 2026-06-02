@@ -31,7 +31,6 @@
   "packages": [
     "npm:context-mode",
     "npm:pi-total-recall",
-    "npm:pi-subagents",
     "npm:pi-intercom",
     "npm:pi-mcp-adapter"
   ],
@@ -39,5 +38,6 @@
     "showTerminalProgress": true,
     "imageWidthCells": 80
   },
-  "plugins": []
+  "plugins": [],
+  "theme": "dark"
 }
