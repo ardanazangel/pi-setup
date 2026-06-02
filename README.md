@@ -25,7 +25,9 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
 
 ```bash
 git clone https://github.com/ardanazangel/pi-setup ~/.pi
-cd ~/.pi/agent && npm install
+cd ~/.pi && pnpm install
+cd ~/.pi/agent && pnpm install
+cd ~/.pi/agent/npm && pnpm install && pnpm rebuild
 ```
 
 ### Environment variables
