@@ -36,7 +36,7 @@
     "npm:pi-mcp-adapter",
     "npm:@spences10/pi-themes"
   ],
-  "theme": "one-dark",
+  "theme": "github-dark-default",
   "terminal": {
     "showTerminalProgress": true,
     "imageWidthCells": 80
