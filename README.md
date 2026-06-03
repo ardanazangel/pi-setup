@@ -10,16 +10,15 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
 └── agent/
     ├── SYSTEM.md          # System prompt injected on every session
     ├── settings.json      # pi settings (model, extensions, subagents...)
-    ├── package.json       # npm dependencies (firecrawl)
+    ├── package.json       # npm dependencies
     ├── npm/
-    │   └── package.json   # pi plugins (context-mode, pi-bar, pi-intercom...)
+    │   └── package.json   # pi plugins (context-mode, pi-bar, pi-intercom, pi-web-access...)
     └── extensions/
         ├── yeet.ts                  # /yeet — git add -A, scan for secrets, auto commit, push
         ├── web-fetch.ts             # Fetch URLs
         ├── youtube-transcript.ts    # YouTube transcripts
         ├── questionnaire.ts         # Interactive questionnaires
         ├── tps-meter.ts             # Token/s meter
-        ├── firecrawl-search.ts      # Web search via Firecrawl
         ├── context-viewer.ts        # Context mode viewer
         ├── plan-mode/               # /plan — read-only exploration mode
         └── subagents/               # Subagent delegation
@@ -33,12 +32,18 @@ cd ~/.pi/agent && npm install
 cd ~/.pi/agent/npm && npm install
 ```
 
-### Environment variables
+No API keys required for basic usage. Web search works out of the box via [pi-web-access](https://pi.dev/packages/pi-web-access) (Exa MCP, zero-config).
 
-Create `~/.pi/agent/.env`:
+### Optional — web search API keys
 
-```env
-FIRECRAWL_API_KEY=your_key_here
+For more search providers, create `~/.pi/web-search.json`:
+
+```json
+{
+  "exaApiKey": "exa-...",
+  "perplexityApiKey": "pplx-...",
+  "geminiApiKey": "AIza..."
+}
 ```
 
 ### Skills

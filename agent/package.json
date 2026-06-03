@@ -1,7 +1,4 @@
 {
   "name": "agent",
-  "private": true,
-  "dependencies": {
-    "@mendable/firecrawl-js": "^4.25.2"
-  }
+  "private": true
 }
