@@ -22,7 +22,7 @@ Steps:
 Keep the commit message concise.`;
 
 export default function (pi: ExtensionAPI) {
-  pi.registerCommand("yeet", {
+  pi.registerCommand("ship", {
     description: "Add, commit, and push the current repo changes",
     handler: async (args, ctx) => {
       const prompt = args?.trim()
@@ -33,7 +33,7 @@ export default function (pi: ExtensionAPI) {
         pi.sendUserMessage(prompt);
       } else {
         pi.sendUserMessage(prompt, { deliverAs: "followUp" });
-        ctx.ui.notify("Queued /yeet as a follow-up", "info");
+        ctx.ui.notify("Queued /ship as a follow-up", "info");
       }
     },
   });
