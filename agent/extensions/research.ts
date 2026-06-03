@@ -8,11 +8,11 @@
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
-const RESEARCH_MESSAGE_TYPE = "pi-research";
-
 function buildResearchPrompt(query: string, depth: "quick" | "deep"): string {
   const searches = depth === "deep" ? 6 : 3;
   const sources  = depth === "deep" ? 8 : 4;
+  const year = new Date().getFullYear();
+  const prevYear = year - 1;
 
   return `# Deep Research: ${query}
 
@@ -21,7 +21,7 @@ Run a structured research process on the topic above. Follow these steps strictl
 ## 1. Search strategy
 Generate ${searches} distinct search queries covering different angles of the topic:
 - Core definition / what it is
-- Latest developments / news (2024–2025)
+- Latest developments / news (${prevYear}–${year})
 - Technical details or how it works
 ${depth === "deep" ? "- Criticisms, limitations, or controversies\n- Comparisons with alternatives\n- Real-world use cases" : "- Key players or context"}
 
@@ -31,7 +31,7 @@ Execute ALL searches using web_search before proceeding to step 2.
 From search results, pick the ${sources} most informative URLs. Prioritize:
 - Primary sources over aggregators
 - Technical depth over marketing copy
-- Recent content (2024–2025) over older unless foundational
+- Recent content (${prevYear}–${year}) over older unless foundational
 
 Fetch each selected URL using web_fetch.
 
