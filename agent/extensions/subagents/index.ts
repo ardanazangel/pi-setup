@@ -86,7 +86,6 @@ const BUILTIN_TOOLS = new Set(["read", "write", "edit", "bash", "grep", "find", 
 const EXT_BASE = path.join(process.env.HOME || "~", ".pi", "agent", "extensions");
 const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
 	web_fetch: path.join(EXT_BASE, "web-fetch.ts"),
-	youtube_transcript: path.join(EXT_BASE, "youtube-transcript.ts"),
 	safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
 };
 

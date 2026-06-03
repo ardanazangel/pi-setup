@@ -2,7 +2,6 @@
   "extensions": [
     "~/.pi/agent/extensions/news.ts",
     "~/.pi/agent/extensions/web-fetch.ts",
-    "~/.pi/agent/extensions/youtube-transcript.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
     "~/.pi/agent/extensions/tps-meter.ts"
   ],
