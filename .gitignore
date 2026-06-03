@@ -33,3 +33,5 @@ session-search/
 **/*.log
 package-lock.json
 **/package-lock.json
+MAIL/token.json
+NEWS/
