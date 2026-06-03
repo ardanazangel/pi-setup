@@ -1,0 +1,14 @@
+{
+  "statusFilter": {
+    "mode": "all",
+    "hidden": []
+  },
+  "segments": [
+    "model",
+    "thinking",
+    "context",
+    "cost",
+    "progress",
+    "extensions"
+  ]
+}

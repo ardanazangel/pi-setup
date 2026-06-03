@@ -15,7 +15,7 @@ export default function (pi: ExtensionAPI) {
 	let isStreaming = false;
 
 	pi.on("session_start", async (_event, ctx) => {
-		ctx.ui.setStatus("tps", ctx.ui.theme.fg("dim", "TPS: —"));
+		ctx.ui.setStatus("tps", ctx.ui.theme.fg("dim", "—"));
 	});
 
 	pi.on("turn_start", async (_event, _ctx) => {
@@ -42,7 +42,7 @@ export default function (pi: ExtensionAPI) {
 
 		const tps = estimatedTokens / elapsedSec;
 		const theme = ctx.ui.theme;
-		const label = theme.fg("accent", `TPS: ~${tps.toFixed(0)}`);
+		const label = theme.fg("accent", `~${tps.toFixed(0)}`);
 		ctx.ui.setStatus("tps", label);
 	});
 
@@ -58,7 +58,7 @@ export default function (pi: ExtensionAPI) {
 			const elapsedSec = (Date.now() - (firstDeltaTime || turnStartTime)) / 1000;
 			if (elapsedSec > 0) {
 				const tps = usage.output / elapsedSec;
-				const label = theme.fg("accent", `TPS: ${tps.toFixed(0)} (${usage.output} tok)`);
+				const label = theme.fg("accent", `${tps.toFixed(0)} (${usage.output} tok)`);
 				ctx.ui.setStatus("tps", label);
 				return;
 			}
