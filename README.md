@@ -37,7 +37,13 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
 ## Installation
 
 ```bash
+# 1. Install pi
+npm install -g @mariozechner/pi-coding-agent
+
+# 2. Clone this config
 git clone https://github.com/ardanazangel/pi-setup ~/.pi
+
+# 3. Install dependencies
 cd ~/.pi/agent && npm install
 ```
 
