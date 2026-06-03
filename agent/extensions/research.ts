@@ -3,8 +3,7 @@
  * Command: /research <query>
  *
  * Injects a structured research prompt so the agent uses its own tools
- * (web_search, scrape, ctx_fetch_and_index, ctx_search) to produce
- * a comprehensive, sourced report.
+ * (web_search, web_fetch) to produce a comprehensive, sourced report.
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
@@ -34,7 +33,7 @@ From search results, pick the ${sources} most informative URLs. Prioritize:
 - Technical depth over marketing copy
 - Recent content (2024–2025) over older unless foundational
 
-Fetch each selected URL using the scrape tool. If scrape fails or returns empty content, fall back to web_fetch for that URL.
+Fetch each selected URL using web_fetch.
 
 ## 3. Synthesis
 Write a structured report with these sections:
