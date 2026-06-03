@@ -34,7 +34,7 @@ From search results, pick the ${sources} most informative URLs. Prioritize:
 - Technical depth over marketing copy
 - Recent content (2024–2025) over older unless foundational
 
-Scrape each selected URL using the scrape tool.
+Fetch each selected URL using the scrape tool. If scrape fails or returns empty content, fall back to web_fetch for that URL.
 
 ## 3. Synthesis
 Write a structured report with these sections:
