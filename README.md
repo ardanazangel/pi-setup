@@ -128,6 +128,6 @@ The `subagent` tool delegates tasks to one of three specialized agents:
 
 ## Notes
 
-- `telegram.json`, `auth.json`, `MAIL/token.json`, `mcp-oauth/` and other secrets are gitignored
+- `telegram.json`, `auth.json`, `mcp-oauth/` and other secrets are gitignored
 - `context-mode/`, `memory/`, `session-search/`, `sessions/` and other runtime dirs are gitignored
 - System prompt (`SYSTEM.md`) is in Spanish — concise, no emojis, no AI filler phrases
