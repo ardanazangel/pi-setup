@@ -14,8 +14,6 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
     ├── models.json        # Local Ollama model definitions
     └── extensions/
         ├── ship.ts              # /ship — git add, scan secrets, commit, push
-        ├── news.ts              # /news — Hacker News, Socket.dev, daily.dev
-        ├── mail.ts              # /mail — Gmail digest & reply drafting
         ├── research.ts          # /research — deep web research workflow
         ├── questionnaire.ts     # questionnaire tool — interactive Q&A UI
         ├── tps-meter.ts         # Token/s meter per turn (notify)
@@ -63,10 +61,6 @@ For API-based providers:
 
 Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 
-### Optional — Gmail integration
-
-`/mail` requires OAuth credentials. Follow the setup in `extensions/mail.ts` — the token is stored at `~/.pi/MAIL/token.json` (gitignored).
-
 ### Optional — Figma MCP
 
 `mcp.json` wires up the Figma MCP server via OAuth. Run the OAuth flow once; credentials are stored in `~/.pi/mcp-oauth/` (gitignored).
@@ -80,8 +74,6 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | Command / Tool | File | Description |
 |---|---|---|
 | `/ship` | `ship.ts` | Runs `git add -A`, scans for secrets, auto-commits, pushes |
-| `/news [hn\|socket\|dailydev\|all]` | `news.ts` | Curated tech news from multiple sources |
-| `/mail [digest\|reply]` | `mail.ts` | Gmail inbox digest and reply drafting |
 | `/research <query>` | `research.ts` | Multi-step web research with synthesis |
 | `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
 | `/workflow <task>` | `workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |

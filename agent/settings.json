@@ -2,8 +2,6 @@
   "extensions": [
     "~/.pi/agent/extensions/caffeinate.ts",
     "~/.pi/agent/extensions/context-viewer.ts",
-    "~/.pi/agent/extensions/mail.ts",
-    "~/.pi/agent/extensions/news.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
     "~/.pi/agent/extensions/research.ts",
     "~/.pi/agent/extensions/ship.ts",
