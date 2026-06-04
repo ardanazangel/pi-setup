@@ -7,7 +7,7 @@
  * a comprehensive, sourced report.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const RESEARCH_MESSAGE_TYPE = "pi-research";
 

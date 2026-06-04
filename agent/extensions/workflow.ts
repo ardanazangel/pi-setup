@@ -10,7 +10,7 @@
  *   best     — sonnet for scout, opus for worker/researcher (max quality)
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -35,8 +35,8 @@ const MODEL_TIERS: Record<Quality, Record<string, string>> = {
   },
   best: {
     scout:      "anthropic/claude-sonnet-4-6",
-    researcher: "anthropic/claude-opus-4-5",
-    worker:     "anthropic/claude-opus-4-5",
+    researcher: "anthropic/claude-opus-4-8",
+    worker:     "anthropic/claude-opus-4-8",
   },
 };
 

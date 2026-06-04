@@ -5,7 +5,7 @@ A pi extension that registers a single `subagent` tool with three agents:
 | Agent | Tools | Model | Purpose |
 |-------|-------|-------|---------|
 | **scout** | read, grep, find, ls | claude-haiku-4-5 | Fast codebase recon |
-| **researcher** | web_search, web_fetch | claude-sonnet-4-6 | Web research |
+| **researcher** | web_search, fetch_content | claude-sonnet-4-6 | Web research |
 | **worker** | read, write, edit, safe_bash | claude-sonnet-4-6 | Code changes |
 
 ## Usage
@@ -69,7 +69,7 @@ The markdown body becomes the agent's system prompt.
 Pi loads extensions via jiti, which creates separate module instances. Direct imports from the subagents extension will reference a different `agents` array than the one the `subagent` tool uses. Use the `globalThis` bridge instead:
 
 ```typescript
-import { parseFrontmatter } from "@mariozechner/pi-coding-agent";
+import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -123,7 +123,7 @@ If your agents need tools beyond the built-in set, those tools must be mapped in
 ```typescript
 const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
   web_search: path.join(EXT_BASE, "web-search", "index.ts"),
-  web_fetch: path.join(EXT_BASE, "web-fetch", "index.ts"),
+  web_search: WEB_ACCESS_EXT, fetch_content: WEB_ACCESS_EXT,
   safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
   video_extract: path.join(EXT_BASE, "video-extract", "index.ts"),
   youtube_search: path.join(EXT_BASE, "youtube-search", "index.ts"),

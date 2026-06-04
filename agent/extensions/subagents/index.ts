@@ -8,9 +8,9 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { getMarkdownTheme, parseFrontmatter, truncateHead, withFileMutationQueue, DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES } from "@mariozechner/pi-coding-agent";
-import { Container, Markdown, Spacer, Text, visibleWidth } from "@mariozechner/pi-tui";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { getMarkdownTheme, parseFrontmatter, truncateHead, withFileMutationQueue, DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES } from "@earendil-works/pi-coding-agent";
+import { Container, Markdown, Spacer, Text, visibleWidth } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -83,9 +83,13 @@ function loadConfig(): ExtensionConfig {
 const BUILTIN_TOOLS = new Set(["read", "write", "edit", "bash", "grep", "find", "ls"]);
 
 // Custom tools that require loading an extension into the subagent process
-const EXT_BASE = path.join(process.env.HOME || "~", ".pi", "agent", "extensions");
+const PI_HOME = path.join(process.env.HOME || "~", ".pi");
+const WEB_ACCESS_EXT = path.join(PI_HOME, "agent", "npm", "node_modules", "pi-web-access", "index.ts");
 const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
-	web_fetch: path.join(EXT_BASE, "web-fetch.ts"),
+	web_search: WEB_ACCESS_EXT,
+	fetch_content: WEB_ACCESS_EXT,
+	code_search: WEB_ACCESS_EXT,
+	get_search_content: WEB_ACCESS_EXT,
 	safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
 };
 
@@ -180,8 +184,10 @@ function formatToolPreview(name: string, args: Record<string, unknown>): string 
 			return `ls ${(args.path as string) || "."}`;
 		case "web_search":
 			return `search "${(args.query as string) || ""}"`;
-		case "web_fetch":
+		case "fetch_content":
 			return `fetch ${(args.url as string) || ""}`;
+		case "code_search":
+			return `code-search "${(args.query as string) || ""}"`;
 		default: {
 			const s = JSON.stringify(args);
 			return `${name} ${s.slice(0, 60)}`;
