@@ -651,6 +651,8 @@ export default function (pi: ExtensionAPI) {
 			"Use subagent to delegate *reasoning and decisions*: codebase exploration (scout), web research (researcher), or isolated code changes (worker)",
 			"For multiple independent subagent tasks, use parallel mode with tasks[] array",
 			"Subagents have NO context from the current conversation — include ALL necessary context in the task description",
+			"SCALE EFFORT TO COMPLEXITY — simple fact-finding: 1 subagent; direct comparison: 2-3 subagents; broad research: 4+ subagents with clearly divided responsibilities. Don't over-invest in simple queries.",
+			"DELEGATION QUALITY — each task description must include: (1) specific objective, (2) expected output format, (3) what sources/tools to prioritize, (4) explicit scope boundaries to prevent overlap with other subagents. Vague tasks cause duplicate work and gaps.",
 		],
 		parameters: Type.Object({
 			agent: Type.Optional(

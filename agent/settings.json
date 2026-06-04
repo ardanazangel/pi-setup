@@ -31,7 +31,8 @@
     "npm:pi-total-recall",
     "npm:pi-intercom",
     "npm:pi-mcp-adapter",
-    "npm:pi-web-access"
+    "npm:pi-web-access",
+    "npm:pi-terminal-theme"
   ],
   "terminal": {
     "showTerminalProgress": true,
