@@ -5,7 +5,6 @@
     "~/.pi/agent/extensions/questionnaire.ts",
     "~/.pi/agent/extensions/research.ts",
     "~/.pi/agent/extensions/ship.ts",
-    "~/.pi/agent/extensions/tps-meter.ts",
     "~/.pi/agent/extensions/workflow.ts"
   ],
   "defaultModel": "anthropic/claude-sonnet-4-6",

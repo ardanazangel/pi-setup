@@ -16,7 +16,6 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
         ├── ship.ts              # /ship — git add, scan secrets, commit, push
         ├── research.ts          # /research — deep web research workflow
         ├── questionnaire.ts     # questionnaire tool — interactive Q&A UI
-        ├── tps-meter.ts         # Token/s meter per turn (notify)
         ├── caffeinate.ts        # Keeps Mac awake while agent is running
         ├── context-viewer.ts    # /context — token usage grid visualization
         ├── workflow.ts          # /workflow — multi-agent orchestration patterns
@@ -78,7 +77,6 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
 | `/workflow <task>` | `workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
-| notify per turn | `tps-meter.ts` | Tokens/second shown after each agent turn |
 | background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
 
 ## Workflows
