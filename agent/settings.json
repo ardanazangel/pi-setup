@@ -28,7 +28,6 @@
     }
   },
   "packages": [
-    "npm:pi-bar",
     "npm:context-mode",
     "npm:pi-total-recall",
     "npm:pi-intercom",
