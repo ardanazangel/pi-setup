@@ -39,6 +39,6 @@
     "imageWidthCells": 80
   },
   "plugins": [],
-  "theme": "dark",
+  "theme": "terminal",
   "transport": "auto"
 }
