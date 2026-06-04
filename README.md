@@ -19,7 +19,6 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
         ├── research.ts          # /research — deep web research workflow
         ├── questionnaire.ts     # questionnaire tool — interactive Q&A UI
         ├── tps-meter.ts         # Token/s meter per turn (notify)
-        ├── cost-meter.ts        # Session cost tracker in status bar
         ├── caffeinate.ts        # Keeps Mac awake while agent is running
         ├── context-viewer.ts    # /context — token usage grid visualization
         └── subagents/           # Subagent delegation system
@@ -86,7 +85,6 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
 | notify per turn | `tps-meter.ts` | Tokens/second shown after each agent turn |
-| status bar | `cost-meter.ts` | Running session cost in USD |
 | background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
 
 ## Subagents
