@@ -12,9 +12,6 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
     ├── settings.json      # pi settings (model, extensions, packages, theme)
     ├── mcp.json           # MCP server configs (Figma OAuth)
     ├── models.json        # Local Ollama model definitions
-    ├── lib/
-    │   ├── chrome-cookies.ts    # Chrome cookie reader (macOS/Linux)
-    │   └── gemini-web.ts        # Gemini Web client via browser cookies
     └── extensions/
         ├── ship.ts              # /ship — git add, scan secrets, commit, push
         ├── news.ts              # /news — Hacker News, Socket.dev, daily.dev
