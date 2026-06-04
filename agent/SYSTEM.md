@@ -44,3 +44,21 @@
 
 ### MCP
 - **mcp** → herramientas de servidores MCP externos (Figma, Chrome DevTools, DeepWiki). Llamar directamente por nombre de tool cuando sea posible.
+
+## Verificación antes de completar
+
+No puedes declarar trabajo como hecho sin haber ejecutado el comando de verificación en ese mismo mensaje.
+
+**Flujo obligatorio antes de cualquier claim de completitud:**
+1. Identifica qué comando prueba el claim
+2. Ejecútalo completo (no parcial, no cached)
+3. Lee el output entero con exit code
+4. Solo entonces haz el claim, citando la evidencia
+
+**Red flags — STOP:**
+- Usar "debería funcionar", "parece correcto", "seems to"
+- Expresar satisfacción antes de verificar
+- Confiar en que un agente reportó éxito sin verificarlo
+- Verificación parcial
+
+**Regla:** evidencia antes que claims, siempre. Sin excepciones.

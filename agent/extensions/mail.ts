@@ -14,6 +14,7 @@ import {
   readFileSync, writeFileSync, existsSync, mkdirSync
 } from "node:fs";
 import { createServer } from "node:http";
+import * as net from "node:net";
 import { execSync } from "node:child_process";
 
 // ── constants ────────────────────────────────────────────────────────────────
@@ -94,6 +95,17 @@ async function getValidToken(): Promise<Token> {
   return t;
 }
 
+// ── port check ──────────────────────────────────────────────────────────────
+
+function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.once("error", () => resolve(false));
+    server.once("listening", () => { server.close(); resolve(true); });
+    server.listen(port);
+  });
+}
+
 // ── OAuth flow ───────────────────────────────────────────────────────────────
 
 async function runOAuthFlow(): Promise<Token> {
@@ -115,6 +127,9 @@ async function runOAuthFlow(): Promise<Token> {
   try { execSync(`open "${authUrl}"`); } catch { /* ignore */ }
 
   // local callback server
+  if (!(await isPortAvailable(3000)))
+    throw new Error("Puerto 3000 ocupado. Cierra la aplicación que lo está usando e intenta de nuevo.");
+
   const code = await new Promise<string>((resolve, reject) => {
     const server = createServer((req, res) => {
       const url = new URL(req.url!, "http://localhost:3000");

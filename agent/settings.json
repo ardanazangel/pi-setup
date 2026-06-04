@@ -1,44 +1,46 @@
 {
   "extensions": [
+    "~/.pi/agent/extensions/caffeinate.ts",
+    "~/.pi/agent/extensions/context-viewer.ts",
+    "~/.pi/agent/extensions/mail.ts",
     "~/.pi/agent/extensions/news.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
-    "~/.pi/agent/extensions/tps-meter.ts"
+    "~/.pi/agent/extensions/research.ts",
+    "~/.pi/agent/extensions/ship.ts",
+    "~/.pi/agent/extensions/tps-meter.ts",
+    "~/.pi/agent/extensions/workflow.ts"
   ],
-  "defaultModel": "claude-sonnet-4-6",
+  "defaultModel": "anthropic/claude-sonnet-4-6",
   "defaultProvider": "anthropic",
-  "defaultThinkingLevel": "low",
+  "defaultThinkingLevel": "medium",
   "editorPaddingX": 2,
-  "enableInstallTelemetry": false,
+  "enableInstallTelemetry": true,
   "hideThinkingBlock": true,
   "quietStartup": false,
-  "lastChangelogVersion": "0.78.0",
+  "lastChangelogVersion": "0.78.1",
   "memory": {
     "consolidationModel": "anthropic/claude-sonnet-4-6"
   },
-  "subagents": {
-    "agentOverrides": {
-      "reviewer": {
-        "model": "anthropic/claude-sonnet-4-6",
-        "thinking": "high",
-        "fallbackModels": [
-          "anthropic/claude-haiku-4-5"
-        ]
-      }
-    }
-  },
+  "subagents": {},
   "packages": [
     "npm:context-mode",
     "npm:pi-total-recall",
     "npm:pi-intercom",
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
-    "npm:pi-terminal-theme"
+    "npm:pi-zentui"
   ],
   "terminal": {
     "showTerminalProgress": true,
     "imageWidthCells": 80
   },
   "plugins": [],
-  "theme": "terminal",
-  "transport": "auto"
+  "transport": "auto",
+  "theme": "dark",
+  "treeFilterMode": "default",
+  "followUpMode": "one-at-a-time",
+  "showHardwareCursor": true,
+  "images": {
+    "blockImages": false
+  }
 }

@@ -193,9 +193,19 @@ async function fetchSource(source: SourceKey, limit: number, signal?: AbortSigna
   return fetchDailyDev(limit, signal);
 }
 
-async function fetchAll(limit: number, sources: SourceKey[], signal?: AbortSignal): Promise<Entry[]> {
+async function fetchAll(limit: number, sources: SourceKey[], signal?: AbortSignal): Promise<{ entries: Entry[]; sourceErrors: string[] }> {
   const results = await Promise.allSettled(sources.map((s) => fetchSource(s, limit, signal)));
-  return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  const entries: Entry[] = [];
+  const sourceErrors: string[] = [];
+  results.forEach((r, i) => {
+    if (r.status === "fulfilled") {
+      entries.push(...r.value);
+    } else {
+      const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      sourceErrors.push(`${sources[i]} (${msg})`);
+    }
+  });
+  return { entries, sourceErrors };
 }
 
 // ── dedup ─────────────────────────────────────────────────────────────────────
@@ -299,10 +309,13 @@ export default function newsExtension(pi: ExtensionAPI) {
       ctx.ui.notify("Fetching news…", "info");
       try {
         const seen = loadSeen();
-        const all = await fetchAll(limit * 4, sources);
+        const { entries: all, sourceErrors } = await fetchAll(limit * 4, sources);
         const { fresh, skipped } = applyDedup(all, seen, limit);
         const entries = fresh.length > 0 ? fresh : all.slice(0, limit * sources.length);
-        const content = formatEntries(entries, fresh.length > 0 ? skipped : 0);
+        let content = formatEntries(entries, fresh.length > 0 ? skipped : 0);
+        if (sourceErrors.length > 0) {
+          content += `\n\n⚠️ Sources unavailable: ${sourceErrors.join(", ")}`;
+        }
         pi.sendMessage({ customType: NEWS_MESSAGE_TYPE, content, display: true });
         saveSeen(markSeen(seen, all.map((e) => e.id)));
       } catch (err) {
