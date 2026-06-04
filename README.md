@@ -6,23 +6,24 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
 
 ```
 ~/.pi/
-├── settings.json          # Root pi settings
+├── web-search.json        # Web search config (allowBrowserCookies, API keys)
 └── agent/
     ├── SYSTEM.md          # System prompt injected on every session
     ├── settings.json      # pi settings (model, extensions, packages, theme)
-    ├── package.json       # npm dependencies
     ├── mcp.json           # MCP server configs (Figma OAuth)
     ├── models.json        # Local Ollama model definitions
-    ├── pi-bar.json        # Status bar segment configuration
+    ├── lib/
+    │   ├── chrome-cookies.ts    # Chrome cookie reader (macOS/Linux)
+    │   └── gemini-web.ts        # Gemini Web client via browser cookies
     └── extensions/
         ├── ship.ts              # /ship — git add, scan secrets, commit, push
-        ├── web-fetch.ts         # web_fetch tool — curl-based URL fetching
         ├── news.ts              # /news — Hacker News, Socket.dev, daily.dev
         ├── mail.ts              # /mail — Gmail digest & reply drafting
         ├── research.ts          # /research — deep web research workflow
         ├── questionnaire.ts     # questionnaire tool — interactive Q&A UI
-        ├── tps-meter.ts         # Token/s meter in status bar
+        ├── tps-meter.ts         # Token/s meter per turn (notify)
         ├── cost-meter.ts        # Session cost tracker in status bar
+        ├── caffeinate.ts        # Keeps Mac awake while agent is running
         ├── context-viewer.ts    # /context — token usage grid visualization
         └── subagents/           # Subagent delegation system
             ├── index.ts         # Entry point — exposes subagent tool
@@ -41,11 +42,19 @@ git clone https://github.com/ardanazangel/pi-setup ~/.pi
 cd ~/.pi/agent && npm install
 ```
 
-No API keys required for basic usage. Web search works out of the box via [pi-web-access](https://pi.dev/packages/pi-web-access) (zero-config).
+### Optional — web search
 
-### Optional — web search API keys
+`pi-web-access` (included via packages) supports multiple providers. Create `~/.pi/web-search.json` to configure:
 
-For more search providers, create `~/.pi/web-search.json`:
+```json
+{
+  "allowBrowserCookies": true
+}
+```
+
+With `allowBrowserCookies: true`, Gemini Web is used via Chrome cookies (no API key needed). Requires being signed into `gemini.google.com` in Chrome.
+
+For API-based providers:
 
 ```json
 {
@@ -54,6 +63,8 @@ For more search providers, create `~/.pi/web-search.json`:
   "geminiApiKey": "AIza..."
 }
 ```
+
+Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 
 ### Optional — Gmail integration
 
@@ -65,7 +76,7 @@ For more search providers, create `~/.pi/web-search.json`:
 
 ### Optional — local models
 
-`models.json` defines Ollama models (`gpt-oss:20b`, `gemma4`, `gemma4:e4b`). Requires [Ollama](https://ollama.com) running locally.
+`models.json` defines Ollama models. Requires [Ollama](https://ollama.com) running locally.
 
 ## Extensions
 
@@ -76,10 +87,10 @@ For more search providers, create `~/.pi/web-search.json`:
 | `/mail [digest\|reply]` | `mail.ts` | Gmail inbox digest and reply drafting |
 | `/research <query>` | `research.ts` | Multi-step web research with synthesis |
 | `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
-| `web_fetch` tool | `web-fetch.ts` | Fetch raw HTML from any URL |
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
-| status bar | `tps-meter.ts` | Real-time tokens/second display |
+| notify per turn | `tps-meter.ts` | Tokens/second shown after each agent turn |
 | status bar | `cost-meter.ts` | Running session cost in USD |
+| background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
 
 ## Subagents
 
@@ -90,8 +101,6 @@ The `subagent` tool delegates tasks to one of three specialized agents:
 | `scout` | haiku | read, grep, find, ls | Fast codebase exploration |
 | `researcher` | sonnet | web_search, web_fetch | Web research & synthesis |
 | `worker` | sonnet | read, write, edit, safe_bash | Autonomous code changes |
-
-Run a single agent or up to 4 in parallel:
 
 ```json
 { "agent": "scout", "task": "find all API route definitions" }
