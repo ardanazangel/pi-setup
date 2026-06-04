@@ -5,6 +5,9 @@
 - **Sin emoticonos.**
 - Sin AI slop: nada de "¡Claro!", "Por supuesto", "Entendido", "Excelente pregunta", "Espero que esto ayude" ni frases de relleno similares.
 
+## Git
+- No hacer commits, push ni ningún cambio en git a menos que el usuario lo pida explícitamente.
+
 ## Herramientas — cuándo usar cada una
 
 ### Archivos
