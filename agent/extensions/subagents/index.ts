@@ -62,6 +62,8 @@ interface Details {
 
 interface ExtensionConfig {
 	maxConcurrency?: number;
+	/** Aisla workers paralelos en git worktrees efímeros para evitar colisiones de escritura. */
+	worktreeIsolation?: boolean;
 }
 
 const EXT_DIR = path.dirname(new URL(import.meta.url).pathname);
@@ -639,6 +641,73 @@ function renderAgentProgress(
 	return c;
 }
 
+// ── Git Worktree Isolation ────────────────────────────────────────
+
+/** Ejecuta git en el directorio dado y captura stdout/stderr. */
+function runGit(args: string[], cwd: string): Promise<{ stdout: string; stderr: string; ok: boolean }> {
+	return new Promise((resolve) => {
+		const proc = spawn("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+		let stdout = "";
+		let stderr = "";
+		proc.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
+		proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
+		proc.on("close", (code) => resolve({ stdout, stderr, ok: code === 0 }));
+		proc.on("error", () => resolve({ stdout: "", stderr: "", ok: false }));
+	});
+}
+
+/** Comprueba si un directorio pertenece a un repo git. */
+async function isGitRepo(dir: string): Promise<boolean> {
+	const { ok } = await runGit(["rev-parse", "--git-dir"], dir);
+	return ok;
+}
+
+/** Crea un worktree efímero apuntando a HEAD y devuelve su ruta. */
+async function createWorktree(baseDir: string): Promise<string> {
+	const worktreeDir = path.join(os.tmpdir(), `pi-wt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+	const { ok, stderr } = await runGit(["worktree", "add", "--detach", worktreeDir, "HEAD"], baseDir);
+	if (!ok) throw new Error(`git worktree add falló: ${stderr.trim()}`);
+	return worktreeDir;
+}
+
+/** Aplica un diff (texto) al repo en cwd vía stdin de git apply. */
+function applyDiff(diff: string, cwd: string): Promise<{ ok: boolean; stderr: string }> {
+	return new Promise((resolve) => {
+		const proc = spawn("git", ["apply", "-"], { cwd, stdio: ["pipe", "ignore", "pipe"] });
+		let stderr = "";
+		proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
+		proc.stdin.end(diff);
+		proc.on("close", (code) => resolve({ ok: code === 0, stderr }));
+		proc.on("error", (err: Error) => resolve({ ok: false, stderr: err.message }));
+	});
+}
+
+/**
+ * Recoge el diff del worktree respecto a HEAD y lo aplica al cwd principal.
+ * Estrategia: stage todo (`git add -A`) para incluir archivos NUEVOS, luego
+ * `git diff --cached HEAD` en worktree | `git apply` en mainCwd.
+ * Si hay conflicto, NO sobreescribe — devuelve mensaje con ruta para revisión manual.
+ */
+async function mergeWorktreeChanges(worktreeDir: string, mainCwd: string): Promise<string[]> {
+	// Stage todo: sin esto `git diff` ignora archivos sin trackear (los que crea el worker).
+	await runGit(["add", "-A"], worktreeDir);
+	const { stdout: diff, ok } = await runGit(["diff", "--cached", "HEAD"], worktreeDir);
+	if (!ok || !diff.trim()) return [];
+
+	const { ok: applyOk, stderr } = await applyDiff(diff, mainCwd);
+	if (applyOk) {
+		return ["✓ Cambios del worktree aplicados al directorio principal."];
+	} else {
+		return [`CONFLICTO al aplicar cambios (${stderr.trim().slice(0, 200)}). Worktree disponible para revisión manual en: ${worktreeDir}`];
+	}
+}
+
+/** Elimina el worktree efímero y ejecuta prune. */
+async function removeWorktree(worktreeDir: string, baseDir: string): Promise<void> {
+	await runGit(["worktree", "remove", "--force", worktreeDir], baseDir);
+	await runGit(["worktree", "prune"], baseDir);
+}
+
 // ── Extension ─────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI) {
@@ -720,18 +789,59 @@ export default function (pi: ExtensionAPI) {
 				};
 				const fireParallelUpdate = throttle(flushParallelUpdate, 150);
 
-				const results = await mapConcurrent(taskList, maxConcurrency, async (t, idx) => {
+				// Aislamiento por worktree: opt-in via config.worktreeIsolation, solo en paralelo
+				const worktreeEnabled = config.worktreeIsolation ?? false;
+				const isParallelRun = taskList.length > 1;
+
+				const results = await mapConcurrent(taskList, maxConcurrency, async (t, idx): Promise<AgentResult> => {
 					const agent = agents.find((a) => a.name === t.agent)!;
-					const result = await runSubagent(agent, t.task, t.cwd ?? cwd, signal, (progress) => {
-						allResults[idx].progress = progress;
-						fireParallelUpdate();
-					});
+					const taskCwd = t.cwd ?? cwd;
 
-					// Update allResults with the completed result so the UI reflects it immediately
-					allResults[idx] = result;
-					flushParallelUpdate();
+					// Crear worktree efímero si: aislamiento activo + paralelo + agente worker + repo git
+					let worktreeDir: string | undefined;
+					let effectiveCwd = taskCwd;
+					let hadConflict = false;
 
-					return result;
+					if (worktreeEnabled && isParallelRun && agent.name === "worker") {
+						if (await isGitRepo(taskCwd)) {
+							try {
+								worktreeDir = await createWorktree(taskCwd);
+								effectiveCwd = worktreeDir;
+							} catch { /* continuar sin aislamiento si falla la creación */ }
+						}
+					}
+
+					try {
+						const result = await runSubagent(agent, t.task, effectiveCwd, signal, (progress) => {
+							allResults[idx].progress = progress;
+							fireParallelUpdate();
+						});
+
+						// Merge worktree → cwd principal (solo si se usó worktree)
+						if (worktreeDir) {
+							try {
+								const mergeMessages = await mergeWorktreeChanges(worktreeDir, taskCwd);
+								hadConflict = mergeMessages.some((m) => m.startsWith("CONFLICTO"));
+								if (mergeMessages.length > 0) {
+									result.output += `\n\n---\n**Worktree merge:**\n${mergeMessages.join("\n")}`;
+								}
+							} catch (mergeErr: any) {
+								// Error inesperado en merge: conservar worktree para revisión
+								hadConflict = true;
+								result.output += `\n\n---\n**Error en merge de worktree:** ${(mergeErr as Error).message}\nWorktree disponible en: ${worktreeDir}`;
+							}
+						}
+
+						// Update allResults con resultado final para que la UI lo refleje
+						allResults[idx] = result;
+						flushParallelUpdate();
+						return result;
+					} finally {
+						// Cleanup: siempre eliminar worktree salvo conflicto (dejarlo para revisión manual)
+						if (worktreeDir && !hadConflict) {
+							try { await removeWorktree(worktreeDir, taskCwd); } catch {}
+						}
+					}
 				});
 
 				// Build final output text
