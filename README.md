@@ -21,6 +21,7 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
         ├── tps-meter.ts         # Token/s meter per turn (notify)
         ├── caffeinate.ts        # Keeps Mac awake while agent is running
         ├── context-viewer.ts    # /context — token usage grid visualization
+        ├── workflow.ts          # /workflow — multi-agent orchestration patterns
         └── subagents/           # Subagent delegation system
             ├── index.ts         # Entry point — exposes subagent tool
             ├── agents/
@@ -83,9 +84,36 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | `/mail [digest\|reply]` | `mail.ts` | Gmail inbox digest and reply drafting |
 | `/research <query>` | `research.ts` | Multi-step web research with synthesis |
 | `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
+| `/workflow <task>` | `workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
 | notify per turn | `tps-meter.ts` | Tokens/second shown after each agent turn |
 | background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
+
+## Workflows
+
+`/workflow <task>` orchestrates multiple subagents using configurable execution patterns:
+
+| Flag | Pattern | Description |
+|---|---|---|
+| (default) | `auto` | Agent selects the best pattern for the task |
+| `--adversarial` | adversarial | One agent generates, another verifies |
+| `--tournament` | tournament | Multiple approaches ranked by rubric |
+| `--loop` | loop | Iterates until a stop condition is met |
+| `--quick` | quick | Single-agent fast pass |
+
+Quality tiers control which model each agent uses:
+
+| Tier | Scout | Researcher / Worker |
+|---|---|---|
+| `--quality fast` | haiku | haiku |
+| `--quality balanced` _(default)_ | haiku | sonnet |
+| `--quality best` | sonnet | opus |
+
+```bash
+/workflow "refactor the database layer" --quality best
+/workflow "write unit tests for auth module" --adversarial
+/workflow "compare two API design approaches" --tournament
+```
 
 ## Subagents
 
