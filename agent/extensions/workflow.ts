@@ -1,8 +1,11 @@
 /**
  * workflow.ts — dynamic multi-agent workflow orchestration for pi
  *
- * Command: /workflow <task> [--adversarial] [--tournament] [--loop] [--quick]
- *                           [--quality fast|balanced|best]
+ * Command: /workflow <task> [--adversarial|--tournament|--loop]
+ *                           [--quality fast|balanced|best] [--quick]
+ *
+ * Patterns: --adversarial | --tournament | --loop (mutually exclusive)
+ * --quick is an alias for --quality fast
  *
  * Quality tiers:
  *   fast     — haiku for all agents (cheap, 3-5x faster)
@@ -11,14 +14,15 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { fileURLToPath } from "url";
 import * as fs from "fs";
 import * as path from "path";
 
-type Pattern = "auto" | "adversarial" | "tournament" | "loop" | "quick";
+type Pattern = "auto" | "adversarial" | "tournament" | "loop";
 type Quality = "fast" | "balanced" | "best";
 
 const AGENTS_DIR = path.join(
-  path.dirname(new URL(import.meta.url).pathname),
+  path.dirname(fileURLToPath(import.meta.url)),
   "subagents/agents"
 );
 
@@ -40,6 +44,10 @@ const MODEL_TIERS: Record<Quality, Record<string, string>> = {
   },
 };
 
+// Track which quality-variant agent names this module has already registered
+// so we never call registerAgent twice for the same name in one process.
+const registeredVariants = new Set<string>();
+
 function loadAgentSystemPrompt(agentName: string): string | null {
   try {
     const filePath = path.join(AGENTS_DIR, `${agentName}.md`);
@@ -48,33 +56,66 @@ function loadAgentSystemPrompt(agentName: string): string | null {
     const match = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
     return match ? match[1].trim() : content.trim();
   } catch {
+    console.warn(`[workflow] failed to load agent prompt for ${agentName}`);
     return null;
   }
 }
 
-function registerQualityAgents(quality: Quality) {
+/**
+ * Registers quality-variant agents (e.g. scout-fast, worker-best).
+ * Returns true if ALL three agents are available, false otherwise.
+ */
+function registerQualityAgents(quality: Quality): boolean {
   const subagents = (globalThis as any).__pi_subagents;
-  if (!subagents?.registerAgent) return;
+  if (!subagents?.registerAgent) {
+    console.warn("[workflow] __pi_subagents unavailable; quality variants not registered");
+    return false;
+  }
 
   const models = MODEL_TIERS[quality];
+  let allOk = true;
 
   for (const [agentName, model] of Object.entries(models)) {
-    const systemPrompt = loadAgentSystemPrompt(agentName);
-    if (!systemPrompt) continue;
-
     const variantName = `${agentName}-${quality}`;
-    subagents.registerAgent({
-      name: variantName,
-      description: `${agentName} (${quality} quality — ${model.split("/")[1]})`,
-      tools: agentName === "scout"
-        ? ["read", "grep", "find", "ls"]
-        : agentName === "researcher"
-        ? ["web_search", "web_fetch"]
-        : ["read", "write", "edit", "safe_bash"],
-      model,
-      systemPrompt,
-    });
+
+    // Already registered by this module in a previous call — treat as success
+    if (registeredVariants.has(variantName)) {
+      continue;
+    }
+
+    const systemPrompt = loadAgentSystemPrompt(agentName);
+    if (!systemPrompt) {
+      console.warn(`[workflow] skipping ${variantName}: system prompt unavailable`);
+      allOk = false;
+      continue;
+    }
+
+    try {
+      subagents.registerAgent({
+        name: variantName,
+        description: `${agentName} (${quality} quality — ${model.split("/")[1] ?? model})`,
+        tools: agentName === "scout"
+          ? ["read", "grep", "find", "ls"]
+          : agentName === "researcher"
+          ? ["web_search", "web_fetch"]
+          : ["read", "write", "edit", "safe_bash"],
+        model,
+        systemPrompt,
+        filePath: path.join(AGENTS_DIR, `${agentName}.md`),
+      });
+      registeredVariants.add(variantName);
+    } catch (e: any) {
+      if (typeof e?.message === "string" && e.message.includes("already registered")) {
+        // Agent was registered by another part of the system — still available
+        registeredVariants.add(variantName);
+      } else {
+        console.warn(`[workflow] failed to register ${variantName}: ${e?.message}`);
+        allOk = false;
+      }
+    }
   }
+
+  return allOk;
 }
 
 function buildWorkflowPrompt(task: string, pattern: Pattern, quality: Quality): string {
@@ -91,9 +132,9 @@ function buildWorkflowPrompt(task: string, pattern: Pattern, quality: Quality): 
   const agentTable = `
 | Agent | Best for | Model |
 |-------|----------|-------|
-| **scout${agentSuffix}** | Code exploration, grep, find, read | ${models.scout.split("/")[1]} |
-| **researcher${agentSuffix}** | Web research, web_search, fetch | ${models.researcher.split("/")[1]} |
-| **worker${agentSuffix}** | Code changes, write, edit, bash | ${models.worker.split("/")[1]} |`;
+| **scout${agentSuffix}** | Code exploration, grep, find, read | ${models.scout.split("/")[1] ?? models.scout} |
+| **researcher${agentSuffix}** | Web research, web_search, fetch | ${models.researcher.split("/")[1] ?? models.researcher} |
+| **worker${agentSuffix}** | Code changes, write, edit, bash | ${models.worker.split("/")[1] ?? models.worker} |`;
 
   return `# Workflow Task
 ${task}
@@ -192,7 +233,7 @@ After agents complete:
 export default function workflowExtension(pi: ExtensionAPI) {
   pi.registerCommand("workflow", {
     description:
-      "Multi-agent workflow: /workflow <task> [--adversarial|--tournament|--loop|--quick] [--quality fast|balanced|best]",
+      "Multi-agent workflow: /workflow <task> [--adversarial|--tournament|--loop] [--quality fast|balanced|best] (--quick = alias for --quality fast)",
     handler: async (args: string, ctx: any) => {
       const trimmed = args.trim();
       if (!trimmed) {
@@ -203,27 +244,46 @@ export default function workflowExtension(pi: ExtensionAPI) {
         return;
       }
 
-      // Parse pattern
+      // Parse pattern using word-boundary regexes to avoid false matches
       let pattern: Pattern = "auto";
-      if (trimmed.includes("--adversarial")) pattern = "adversarial";
-      else if (trimmed.includes("--tournament")) pattern = "tournament";
-      else if (trimmed.includes("--loop")) pattern = "loop";
-      else if (trimmed.includes("--quick")) pattern = "quick";
+      if (/(?:^|\s)--adversarial\b/.test(trimmed)) pattern = "adversarial";
+      else if (/(?:^|\s)--tournament\b/.test(trimmed)) pattern = "tournament";
+      else if (/(?:^|\s)--loop\b/.test(trimmed)) pattern = "loop";
 
-      // Parse quality
+      // Parse quality — explicit --quality takes precedence over --quick
       let quality: Quality = "balanced";
-      const qualityMatch = trimmed.match(/--quality\s+(fast|balanced|best)/);
-      if (qualityMatch) quality = qualityMatch[1] as Quality;
+      const qualityMatch = trimmed.match(/(?:^|\s)--quality\s+(fast|balanced|best)\b/);
+      if (qualityMatch) {
+        quality = qualityMatch[1] as Quality;
+      } else if (/(?:^|\s)--quick\b/.test(trimmed)) {
+        // --quick is an alias for --quality fast
+        quality = "fast";
+      }
 
-      // Clean task string
+      // Clean task string — strip recognized flags with word-boundary safety
       const task = trimmed
-        .replace(/--adversarial|--tournament|--loop|--quick/g, "")
-        .replace(/--quality\s+(fast|balanced|best)/, "")
+        .replace(/(?:^|\s)--adversarial\b/g, " ")
+        .replace(/(?:^|\s)--tournament\b/g, " ")
+        .replace(/(?:^|\s)--loop\b/g, " ")
+        .replace(/(?:^|\s)--quick\b/g, " ")
+        .replace(/(?:^|\s)--quality\s+(fast|balanced|best)\b/g, " ")
+        .replace(/\s{2,}/g, " ")
         .trim();
 
-      // Register quality variants if not balanced (default agents already exist)
+      // Validate that a non-empty task remains after stripping flags
+      if (!task) {
+        ctx.ui.notify("Task required after flags", "error");
+        return;
+      }
+
+      // Register quality variants if not balanced (default agents already exist).
+      // Fall back to balanced if variant registration fails.
       if (quality !== "balanced") {
-        registerQualityAgents(quality);
+        const ok = registerQualityAgents(quality);
+        if (!ok) {
+          ctx.ui.notify(`Quality '${quality}' agents unavailable — falling back to balanced`, "warning");
+          quality = "balanced";
+        }
       }
 
       const patternLabel = pattern === "auto" ? "auto-detect" : pattern;
@@ -233,7 +293,11 @@ export default function workflowExtension(pi: ExtensionAPI) {
       );
 
       const prompt = buildWorkflowPrompt(task, pattern, quality);
-      pi.sendUserMessage(prompt);
+      try {
+        pi.sendUserMessage(prompt);
+      } catch (e: any) {
+        ctx.ui.notify(`Workflow failed: ${e.message}`, "error");
+      }
     },
   });
 }

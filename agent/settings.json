@@ -7,8 +7,8 @@
     "~/.pi/agent/extensions/ship.ts",
     "~/.pi/agent/extensions/workflow.ts"
   ],
-  "defaultModel": "anthropic/claude-sonnet-4-6",
-  "defaultProvider": "anthropic",
+  "defaultModel": "gemma4",
+  "defaultProvider": "ollama",
   "defaultThinkingLevel": "medium",
   "editorPaddingX": 2,
   "enableInstallTelemetry": true,
