@@ -21,6 +21,7 @@ agent/git/
 agent/bin/
 agent/packages/
 agent/npm/
+agent/generated-images/
 
 # context-mode runtime
 context-mode/

@@ -1,7 +1,7 @@
 {
-  "defaultModel": "claude-opus-4-7",
-  "defaultProvider": "anthropic",
-  "defaultThinkingLevel": "medium",
+  "defaultModel": "gpt-5.5",
+  "defaultProvider": "openai-codex",
+  "defaultThinkingLevel": "low",
   "editorPaddingX": 2,
   "enableInstallTelemetry": true,
   "extensions": [
@@ -27,7 +27,8 @@
     "npm:pi-intercom",
     "npm:pi-mcp-adapter",
     "npm:pi-web-access",
-    "npm:pi-zentui"
+    "npm:pi-zentui",
+    "npm:pi-codex-image-gen"
   ],
   "plugins": [],
   "quietStartup": false,
