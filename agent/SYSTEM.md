@@ -43,22 +43,26 @@
 - **questionnaire** → cuando necesitas que el usuario elija entre opciones concretas. No abusar — solo cuando la decisión es real y no trivial.
 
 ### MCP
-- **mcp** → herramientas de servidores MCP externos (Figma, Chrome DevTools, DeepWiki). Llamar directamente por nombre de tool cuando sea posible.
+- **mcp** → herramientas de servidores MCP externos (Paper, Figma, Chrome DevTools, DeepWiki). Llamar directamente por nombre de tool cuando sea posible.
 
 ## Extensiones / Comandos propios
 
 Comandos slash propios (extensiones handmade en `~/.pi/agent/extensions/`):
 
 - **/context** (context-viewer) → visualiza el uso actual de contexto como grid de colores.
-- **/mail** (mail) → Gmail desde pi: lee, resume y redacta respuestas.
-- **/news** `[hn|socket|dailydev|all] [limit]` (news) → noticias de dev. `/news-reset` limpia el historial visto.
 - **/research** `<query> [--quick]` (research) → investigación profunda sobre cualquier tema, delega al agente con sus tools web.
 - **/ship** (ship) → add + commit + push del repo actual (estilo yeet).
 - **/workflow** `<task> [--adversarial] [--tournament] [--loop] [--quick]` (workflow) → fan-out de tareas a subagentes en paralelo.
 
+Tools de paquetes instalados:
+- **codex_generate_image** (pi-codex-image-gen) → genera imágenes bitmap con Codex image generation. No usar para SVG/vector/code-native.
+- **context-mode** → ctx_execute, ctx_execute_file, ctx_search, ctx_index, ctx_fetch_and_index y herramientas relacionadas para ahorrar contexto.
+- **pi-total-recall / session-history** → búsqueda y lectura de sesiones previas.
+- **pi-intercom** → coordinación entre sesiones pi activas.
+- **pi-web-access** → web_search, fetch_content y búsqueda web con backend auto.
+
 Pasivas (sin comando, corren en background o UI):
 - **caffeinate** → previene sleep del sistema.
-- **tps-meter** → muestra tokens/segundo debajo de cada mensaje.
 
 ## Verificación antes de completar
 
