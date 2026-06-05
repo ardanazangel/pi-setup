@@ -26,8 +26,8 @@
         },
         {
           "_launch": true,
-          "contextWindow": 131072,
-          "id": "gemma4:e4b",
+          "contextWindow": 262144,
+          "id": "qwen3.5:9b",
           "input": [
             "text",
             "image"

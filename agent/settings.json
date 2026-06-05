@@ -1,4 +1,9 @@
 {
+  "defaultModel": "claude-opus-4-7",
+  "defaultProvider": "anthropic",
+  "defaultThinkingLevel": "medium",
+  "editorPaddingX": 2,
+  "enableInstallTelemetry": true,
   "extensions": [
     "~/.pi/agent/extensions/caffeinate.ts",
     "~/.pi/agent/extensions/context-viewer.ts",
@@ -7,18 +12,15 @@
     "~/.pi/agent/extensions/ship.ts",
     "~/.pi/agent/extensions/workflow.ts"
   ],
-  "defaultModel": "gemma4",
-  "defaultProvider": "ollama",
-  "defaultThinkingLevel": "medium",
-  "editorPaddingX": 2,
-  "enableInstallTelemetry": true,
+  "followUpMode": "one-at-a-time",
   "hideThinkingBlock": true,
-  "quietStartup": false,
+  "images": {
+    "blockImages": false
+  },
   "lastChangelogVersion": "0.78.1",
   "memory": {
     "consolidationModel": "anthropic/claude-sonnet-4-6"
   },
-  "subagents": {},
   "packages": [
     "npm:context-mode",
     "npm:pi-total-recall",
@@ -27,17 +29,15 @@
     "npm:pi-web-access",
     "npm:pi-zentui"
   ],
-  "terminal": {
-    "showTerminalProgress": true,
-    "imageWidthCells": 80
-  },
   "plugins": [],
-  "transport": "auto",
-  "theme": "dark",
-  "treeFilterMode": "default",
-  "followUpMode": "one-at-a-time",
+  "quietStartup": false,
   "showHardwareCursor": true,
-  "images": {
-    "blockImages": false
-  }
+  "subagents": {},
+  "terminal": {
+    "imageWidthCells": 80,
+    "showTerminalProgress": true
+  },
+  "theme": "dark",
+  "transport": "auto",
+  "treeFilterMode": "default"
 }
