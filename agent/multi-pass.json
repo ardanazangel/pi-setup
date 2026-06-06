@@ -1,0 +1,17 @@
+{
+  "subscriptions": [
+    {
+      "provider": "anthropic",
+      "index": 2,
+      "label": "Personal"
+    },
+    {
+      "provider": "openai-codex",
+      "index": 2,
+      "label": "Personal"
+    }
+  ],
+  "pools": [],
+  "chains": [],
+  "presets": []
+}
