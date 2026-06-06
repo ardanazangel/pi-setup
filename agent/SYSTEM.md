@@ -39,7 +39,7 @@
 - **session_read** → leer el contenido completo de una sesión específica.
 
 ### Delegación
-- **subagent** → usar proactivamente y con frecuencia. No solo para tareas grandes — también para exploración de código (scout), búsquedas web (researcher) y cambios aislados (worker). Si la tarea implica leer varios archivos, investigar algo en la web, o hacer cambios en código, delega en un subagente en vez de hacerlo directamente.
+- **subagent** → usar solo cuando aporte valor claro: tareas complejas, investigación amplia, exploración de varios archivos con incertidumbre, comparación de enfoques, o cambios aislados que convenga separar. No lanzar subagentes para tareas simples, búsquedas puntuales, lecturas pequeñas, edición directa de un archivo, ni por defecto en cada cambio de código. Prioriza hacerlo directamente cuando el alcance sea claro y pequeño.
 - **questionnaire** → cuando necesitas que el usuario elija entre opciones concretas. No abusar — solo cuando la decisión es real y no trivial.
 
 ### MCP

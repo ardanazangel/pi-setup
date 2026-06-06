@@ -93,6 +93,7 @@ const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
 	code_search: WEB_ACCESS_EXT,
 	get_search_content: WEB_ACCESS_EXT,
 	safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
+	rg: path.join(TOOLS_DIR, "rg.ts"),
 };
 
 // ── Agent Discovery & Registration ────────────────────────────────────
@@ -180,6 +181,8 @@ function formatToolPreview(name: string, args: Record<string, unknown>): string 
 			return `edit ${(args.path as string) || ""}`;
 		case "grep":
 			return `grep ${(args.pattern as string) || ""}`;
+		case "rg":
+			return `rg ${(args.pattern as string) || ""}`;
 		case "find":
 			return `find ${(args.pattern as string) || ""}`;
 		case "ls":

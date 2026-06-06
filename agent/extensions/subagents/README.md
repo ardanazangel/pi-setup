@@ -4,7 +4,7 @@ A pi extension that registers a single `subagent` tool with three agents:
 
 | Agent | Tools | Model | Purpose |
 |-------|-------|-------|---------|
-| **scout** | read, grep, find, ls | claude-haiku-4-5 | Fast codebase recon |
+| **scout** | read, rg, find, ls | claude-haiku-4-5 | Fast codebase recon |
 | **researcher** | web_search, fetch_content | claude-sonnet-4-6 | Web research |
 | **worker** | read, write, edit, safe_bash | claude-sonnet-4-6 | Code changes |
 
@@ -125,13 +125,14 @@ const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
   web_search: path.join(EXT_BASE, "web-search", "index.ts"),
   web_search: WEB_ACCESS_EXT, fetch_content: WEB_ACCESS_EXT,
   safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
+  rg: path.join(TOOLS_DIR, "rg.ts"),
   video_extract: path.join(EXT_BASE, "video-extract", "index.ts"),
   youtube_search: path.join(EXT_BASE, "youtube-search", "index.ts"),
   google_image_search: path.join(EXT_BASE, "google-image-search", "index.ts"),
 };
 ```
 
-Built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`) work automatically. Any other tool the agent lists in its frontmatter must have a corresponding entry here pointing to the extension's `index.ts`.
+Built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`) work automatically. Custom tools like `rg` need a corresponding entry here pointing to their extension file.
 
 ## Structure
 
@@ -140,5 +141,6 @@ subagents/
 ├── index.ts           # Extension entry point
 ├── agents/            # Built-in agent configs (frontmatter + system prompt)
 └── tools/             # Extensions loaded into subagent processes
+    ├── rg.ts          # ripgrep search
     └── safe-bash.ts   # bash with dangerous command blocking
 ```

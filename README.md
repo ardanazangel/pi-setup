@@ -117,7 +117,7 @@ The `subagent` tool delegates tasks to one of three specialized agents:
 
 | Agent | Model | Tools | Use for |
 |---|---|---|---|
-| `scout` | haiku | read, grep, find, ls | Fast codebase exploration |
+| `scout` | haiku | read, rg, find, ls | Fast codebase exploration |
 | `researcher` | sonnet | web_search, web_fetch | Web research & synthesis |
 | `worker` | sonnet | read, write, edit, safe_bash | Autonomous code changes |
 

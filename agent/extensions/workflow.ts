@@ -95,7 +95,7 @@ function registerQualityAgents(quality: Quality): boolean {
         name: variantName,
         description: `${agentName} (${quality} quality — ${model.split("/")[1] ?? model})`,
         tools: agentName === "scout"
-          ? ["read", "grep", "find", "ls"]
+          ? ["read", "rg", "find", "ls"]
           : agentName === "researcher"
           ? ["web_search", "web_fetch"]
           : ["read", "write", "edit", "safe_bash"],
@@ -132,7 +132,7 @@ function buildWorkflowPrompt(task: string, pattern: Pattern, quality: Quality): 
   const agentTable = `
 | Agent | Best for | Model |
 |-------|----------|-------|
-| **scout${agentSuffix}** | Code exploration, grep, find, read | ${models.scout.split("/")[1] ?? models.scout} |
+| **scout${agentSuffix}** | Code exploration, rg, find, read | ${models.scout.split("/")[1] ?? models.scout} |
 | **researcher${agentSuffix}** | Web research, web_search, fetch | ${models.researcher.split("/")[1] ?? models.researcher} |
 | **worker${agentSuffix}** | Code changes, write, edit, bash | ${models.worker.split("/")[1] ?? models.worker} |`;
 

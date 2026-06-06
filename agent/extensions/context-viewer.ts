@@ -180,6 +180,7 @@ function computeBreakdown(ctx: any): ContextBreakdown | null {
         edit:                { label: "Tool: edit",       colorCode: 179 },
         write:               { label: "Tool: write",      colorCode: 143 },
         grep:                { label: "Tool: grep",       colorCode: 109 },
+        rg:                  { label: "Tool: rg",         colorCode: 110 },
         find:                { label: "Tool: find",       colorCode: 146 },
         ls:                  { label: "Tool: ls",         colorCode: 108 },
         subagent:            { label: "Tool: subagent",   colorCode: 175 },
