@@ -4,6 +4,9 @@
  * Pi Agent Eval Runner
  * Evalúa si el agente sigue los comportamientos definidos en SYSTEM.md
  *
+ * Usa el CLI de pi para las llamadas LLM — funciona con cualquier provider
+ * configurado en agent/settings.json (Anthropic, OpenAI, Gemini, etc.)
+ *
  * Uso:
  *   node ~/.pi/evals/run.js              # todos los casos
  *   node ~/.pi/evals/run.js 01-no-slop   # caso específico
@@ -13,46 +16,29 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CASES_DIR = path.join(__dirname, 'cases');
 const RESULTS_DIR = path.join(__dirname, 'results');
 const SYSTEM_MD = path.join(__dirname, '../agent/SYSTEM.md');
-const AUTH_JSON = path.join(__dirname, '../agent/auth.json');
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─── LLM call via pi CLI ──────────────────────────────────────────────────────
+// Delega al CLI de pi, que usa el provider/model de settings.json.
+// Funciona con cualquier provider sin cambiar este archivo.
 
-function getAuth() {
-  const auth = JSON.parse(fs.readFileSync(AUTH_JSON, 'utf8'));
-  const anthropic = auth.anthropic;
-  if (!anthropic?.access) throw new Error('No Anthropic auth token found in auth.json');
-  return anthropic.access;
-}
-
-// ─── Anthropic API call ───────────────────────────────────────────────────────
-
-async function callClaude(systemPrompt, userPrompt, model = 'claude-haiku-4-5') {
-  const token = getAuth();
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`API error ${res.status}: ${err}`);
+async function callLLM(systemPrompt, userPrompt) {
+  const tmpSystem = path.join(RESULTS_DIR, `_tmp_system_${Date.now()}.md`);
+  fs.writeFileSync(tmpSystem, systemPrompt);
+  try {
+    const output = execSync(
+      `pi --print --no-session --system-prompt ${JSON.stringify(tmpSystem)} ${JSON.stringify(userPrompt)}`,
+      { encoding: 'utf8', timeout: 60000 }
+    );
+    return output.trim();
+  } finally {
+    try { fs.unlinkSync(tmpSystem); } catch {}
   }
-  const data = await res.json();
-  return data.content[0].text;
 }
 
 // ─── Checkers ─────────────────────────────────────────────────────────────────
@@ -82,12 +68,11 @@ function checkDeterministic(response, check) {
   return { name: check.name, passed: false, detail: 'Check mal configurado' };
 }
 
-async function checkLLMJudge(response, check, systemPrompt) {
+async function checkLLMJudge(response, check) {
   const judgePrompt = `${check.prompt}\n\n---\nRESPUESTA DEL AGENTE:\n${response}`;
-  const judgment = await callClaude(
+  const judgment = await callLLM(
     'Eres un evaluador estricto. Responde únicamente con PASS o FAIL seguido de una línea de explicación. Nada más.',
-    judgePrompt,
-    'claude-haiku-4-5'
+    judgePrompt
   );
   const passed = judgment.trim().startsWith('PASS');
   return {
@@ -114,7 +99,7 @@ async function runCase(caseFile, systemPrompt) {
 
     let response;
     try {
-      response = await callClaude(systemPrompt, prompt);
+      response = await callLLM(systemPrompt, prompt);
       console.log(`  → Respuesta: ${response.slice(0, 100).replace(/\n/g, ' ')}...`);
     } catch (e) {
       console.error(`  ✗ Error en API: ${e.message}`);
@@ -124,14 +109,13 @@ async function runCase(caseFile, systemPrompt) {
 
     const checkResults = [];
     for (const check of testCase.checks) {
-      // Si el check tiene promptIndex, solo aplica a ese prompt
       if (check.promptIndex !== undefined && check.promptIndex !== promptIdx) continue;
 
       let result;
       if (check.type === 'deterministic') {
         result = checkDeterministic(response, check);
       } else if (check.type === 'llm-judge') {
-        result = await checkLLMJudge(response, check, systemPrompt);
+        result = await checkLLMJudge(response, check);
       } else {
         result = { name: check.name, passed: false, detail: `Tipo de check desconocido: ${check.type}` };
       }
@@ -166,7 +150,7 @@ async function runCase(caseFile, systemPrompt) {
 
 function compareRuns() {
   const files = fs.readdirSync(RESULTS_DIR)
-    .filter(f => f.endsWith('.json'))
+    .filter(f => f.startsWith('run-') && f.endsWith('.json'))
     .sort()
     .slice(-2);
 
@@ -219,7 +203,6 @@ async function main() {
   console.log(`\x1b[1mPi Agent Evals\x1b[0m`);
   console.log(`System prompt: ${SYSTEM_MD} (${systemPrompt.length} chars)\n`);
 
-  // Determinar qué casos correr
   let caseFiles = fs.readdirSync(CASES_DIR).filter(f => f.endsWith('.json')).sort();
   if (args.length > 0 && !args[0].startsWith('--')) {
     caseFiles = caseFiles.filter(f => f.includes(args[0]));
@@ -242,7 +225,6 @@ async function main() {
     runResults.cases.push(result);
   }
 
-  // Score global
   const totalPassed = runResults.cases.reduce((s, c) => s + c.passed, 0);
   const totalChecks = runResults.cases.reduce((s, c) => s + c.total, 0);
   const globalScore = totalChecks > 0 ? Math.round((totalPassed / totalChecks) * 100) : 0;
@@ -251,7 +233,6 @@ async function main() {
   console.log('\n' + '━'.repeat(50));
   console.log(`\x1b[1mScore global: ${totalPassed}/${totalChecks} (${globalScore}%)\x1b[0m`);
 
-  // Guardar resultado
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const resultFile = path.join(RESULTS_DIR, `run-${timestamp}.json`);
   fs.writeFileSync(resultFile, JSON.stringify(runResults, null, 2));

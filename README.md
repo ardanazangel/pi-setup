@@ -167,13 +167,17 @@ node ~/.pi/evals/run-extensions.js
 node ~/.pi/evals/run-extensions.js ship
 ```
 
+### Provider
+
+El runner usa el CLI de pi (`pi --print`) para las llamadas LLM, por lo que respeta el provider y model configurados en `agent/settings.json`. Cambiar de Anthropic a OpenAI, Gemini u otro provider no requiere tocar el runner.
+
 ### Automatización (pre-commit hook)
 
 `.git/hooks/pre-commit` dispara automáticamente los evals relevantes al hacer commit:
 
 | Archivo cambiado | Eval | Duración |
 |---|---|---|
-| `agent/SYSTEM.md` | LLM behavior (6 casos, llama a la API) | ~3 min |
+| `agent/SYSTEM.md` | LLM behavior (6 casos, via pi CLI) | ~3 min |
 | `agent/extensions/*.ts` | Code checks (estructura + invariantes) | ~2s |
 
 Si el score baja del 85%, el commit se bloquea. Para saltarse el check: `git commit --no-verify`.
