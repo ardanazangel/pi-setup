@@ -36,3 +36,4 @@ package-lock.json
 **/package-lock.json
 MAIL/token.json
 NEWS/
+evals/results/

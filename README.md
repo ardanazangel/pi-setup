@@ -14,7 +14,6 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
 └── agent/
     ├── SYSTEM.md          # System prompt injected on every session
     ├── settings.json      # pi settings (model, extensions, packages, theme)
-    ├── mcp.json           # MCP server configs (Paper + Figma OAuth)
     ├── models.json        # Local Ollama model definitions
     └── extensions/
         ├── ship.ts              # /ship — git add, scan secrets, commit, push
@@ -65,13 +64,6 @@ For API-based providers:
 
 Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 
-### Optional — MCP servers
-
-`mcp.json` currently wires:
-
-- `paper` — Paper Design MCP at `http://127.0.0.1:29979/mcp` (requires Paper Desktop running)
-- `figma` — Figma MCP via OAuth; credentials are stored in `~/.pi/mcp-oauth/` (gitignored)
-
 ### Optional — local models
 
 `models.json` defines Ollama models. Requires [Ollama](https://ollama.com) running locally.
@@ -87,7 +79,7 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
 | `codex_generate_image` tool | `npm:pi-codex-image-gen` | Generates bitmap images through Codex image generation |
 | background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
-| background/UI | `context-mode`, `pi-total-recall`, `pi-intercom`, `pi-mcp-adapter`, `pi-web-access`, `pi-zentui` | Installed npm packages that add context, session history, MCP, web and UI tools |
+| background/UI | `context-mode`, `pi-total-recall`, `pi-intercom`, `pi-web-access`, `pi-zentui` | Installed npm packages that add context, session history, web and UI tools |
 
 ## Workflows
 
@@ -198,6 +190,6 @@ Para extensiones, añade los invariantes en `BEHAVIORAL_CHECKS` dentro de `run-e
 
 - Default runtime is configured in `agent/settings.json`; current package set includes `pi-codex-image-gen`
 - Generated images are ignored via `agent/generated-images/`
-- `telegram.json`, `auth.json`, `mcp-oauth/` and other secrets are gitignored
+- `telegram.json`, `auth.json` and other secrets are gitignored
 - `context-mode/`, `memory/`, `session-search/`, `sessions/` and other runtime dirs are gitignored
 - System prompt (`SYSTEM.md`) is in Spanish — concise, no emojis, no AI filler phrases
