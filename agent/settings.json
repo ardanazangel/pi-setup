@@ -1,6 +1,6 @@
 {
-  "defaultModel": "gpt-5.5",
-  "defaultProvider": "openai-codex",
+  "defaultModel": "claude-sonnet-4-6",
+  "defaultProvider": "anthropic",
   "defaultThinkingLevel": "low",
   "editorPaddingX": 2,
   "enableInstallTelemetry": true,
