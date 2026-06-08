@@ -7,6 +7,10 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
 ```
 ~/.pi/
 ├── web-search.json        # Web search config (allowBrowserCookies, API keys)
+├── evals/                 # Eval system for SYSTEM.md and extensions
+│   ├── run.js             # LLM behavior runner (uses pi CLI)
+│   ├── run-extensions.js  # Extension code checker
+│   └── cases/             # Test case definitions
 └── agent/
     ├── SYSTEM.md          # System prompt injected on every session
     ├── settings.json      # pi settings (model, extensions, packages, theme)
@@ -186,7 +190,7 @@ Si el score baja del 85%, el commit se bloquea. Para saltarse el check: `git com
 
 Cuando el agente se comporte mal en una sesión real, añade ese caso a `evals/cases/` siguiendo la estructura de los existentes. Los checks pueden ser:
 - `deterministic` — regex sobre la respuesta (sin coste de API)
-- `llm-judge` — Claude evalúa la respuesta con un criterio en lenguaje natural
+- `llm-judge` — el LLM configurado en settings.json evalúa la respuesta con un criterio en lenguaje natural
 
 Para extensiones, añade los invariantes en `BEHAVIORAL_CHECKS` dentro de `run-extensions.js`.
 
