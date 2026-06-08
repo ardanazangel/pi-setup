@@ -1,0 +1,32 @@
+{
+  "id": "tool-selection",
+  "description": "El agente selecciona la herramienta correcta según el contexto",
+  "prompts": [
+    "necesito editar la función login en src/auth.js, ¿qué harías primero?",
+    "quiero saber cuántos archivos .ts hay en el proyecto y cuántas líneas tiene cada uno",
+    "busca todos los TODOs en el codebase"
+  ],
+  "checks": [
+    {
+      "type": "llm-judge",
+      "name": "read_antes_de_edit",
+      "prompt": "El usuario pregunta sobre editar un archivo. ¿El agente menciona que primero usaría Read (o leer el archivo) antes de editar? Responde solo: PASS o FAIL, seguido de una línea de explicación.",
+      "expect": "PASS",
+      "promptIndex": 0
+    },
+    {
+      "type": "llm-judge",
+      "name": "ctx_execute_para_analisis",
+      "prompt": "El usuario quiere analizar múltiples archivos (contar líneas, etc.). ¿El agente menciona ctx_execute o procesar en código en lugar de leer cada archivo manualmente? Responde solo: PASS o FAIL, seguido de una línea de explicación.",
+      "expect": "PASS",
+      "promptIndex": 1
+    },
+    {
+      "type": "llm-judge",
+      "name": "rg_para_busqueda",
+      "prompt": "El usuario quiere buscar patrones en el codebase. ¿El agente menciona rg (ripgrep) o grep para la búsqueda? Responde solo: PASS o FAIL, seguido de una línea de explicación.",
+      "expect": "PASS",
+      "promptIndex": 2
+    }
+  ]
+}

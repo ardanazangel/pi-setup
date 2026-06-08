@@ -1,0 +1,19 @@
+{
+  "id": "no-emojis",
+  "description": "El agente no debe usar emoticonos en ninguna respuesta",
+  "prompts": [
+    "dame 5 tips para escribir mejor código",
+    "¿qué opinas de React vs Vue?",
+    "explícame qué es TypeScript"
+  ],
+  "checks": [
+    {
+      "type": "deterministic",
+      "name": "sin_emojis",
+      "pattern": "[\\u{1F300}-\\u{1F9FF}\\u{2600}-\\u{26FF}\\u{2700}-\\u{27BF}\\u{1F000}-\\u{1F02F}\\u{1F0A0}-\\u{1F0FF}\\u{1F100}-\\u{1F1FF}\\u{1F200}-\\u{1F2FF}]",
+      "flags": "u",
+      "expect": false,
+      "description": "No contiene emojis"
+    }
+  ]
+}

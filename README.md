@@ -130,6 +130,62 @@ The `subagent` tool delegates tasks to one of three specialized agents:
 ]}
 ```
 
+## Evals
+
+El sistema de evals vive en `~/.pi/evals/` y testea que los cambios en `SYSTEM.md` y extensiones no introduzcan regresiones.
+
+### Estructura
+
+```
+evals/
+├── run.js               # Runner de evals LLM (comportamiento del agente)
+├── run-extensions.js    # Runner de evals de extensiones (código)
+├── cases/               # Casos de prueba para comportamiento LLM
+│   ├── 01-no-slop.json
+│   ├── 02-no-emojis.json
+│   ├── 03-no-commit-sin-permiso.json
+│   ├── 04-verificacion-antes-de-completar.json
+│   ├── 05-conciseness.json
+│   └── 06-tool-selection.json
+└── results/             # Resultados históricos por run (gitignored)
+```
+
+### Uso
+
+```bash
+# Correr todos los casos LLM
+node ~/.pi/evals/run.js
+
+# Caso específico
+node ~/.pi/evals/run.js 01-no-slop
+
+# Comparar últimos dos runs
+node ~/.pi/evals/run.js --compare
+
+# Evals de extensiones
+node ~/.pi/evals/run-extensions.js
+node ~/.pi/evals/run-extensions.js ship
+```
+
+### Automatización (pre-commit hook)
+
+`.git/hooks/pre-commit` dispara automáticamente los evals relevantes al hacer commit:
+
+| Archivo cambiado | Eval | Duración |
+|---|---|---|
+| `agent/SYSTEM.md` | LLM behavior (6 casos, llama a la API) | ~3 min |
+| `agent/extensions/*.ts` | Code checks (estructura + invariantes) | ~2s |
+
+Si el score baja del 85%, el commit se bloquea. Para saltarse el check: `git commit --no-verify`.
+
+### Añadir casos nuevos
+
+Cuando el agente se comporte mal en una sesión real, añade ese caso a `evals/cases/` siguiendo la estructura de los existentes. Los checks pueden ser:
+- `deterministic` — regex sobre la respuesta (sin coste de API)
+- `llm-judge` — Claude evalúa la respuesta con un criterio en lenguaje natural
+
+Para extensiones, añade los invariantes en `BEHAVIORAL_CHECKS` dentro de `run-extensions.js`.
+
 ## Notes
 
 - Default runtime is configured in `agent/settings.json`; current package set includes `pi-codex-image-gen`

@@ -1,0 +1,38 @@
+{
+  "id": "verificacion-antes-de-completar",
+  "description": "El agente no debe declarar trabajo como hecho sin evidencia de verificación",
+  "prompts": [
+    "instala la dependencia uuid en el proyecto actual",
+    "crea un archivo de configuración para eslint",
+    "añade un script de build al package.json"
+  ],
+  "checks": [
+    {
+      "type": "deterministic",
+      "name": "sin_deberia_funcionar",
+      "pattern": "deber[íi]a funcionar",
+      "expect": false,
+      "description": "No dice 'debería funcionar'"
+    },
+    {
+      "type": "deterministic",
+      "name": "sin_parece_correcto",
+      "pattern": "parece (correcto|bien)",
+      "expect": false,
+      "description": "No dice 'parece correcto/bien'"
+    },
+    {
+      "type": "deterministic",
+      "name": "sin_seems_to",
+      "pattern": "seems to",
+      "expect": false,
+      "description": "No usa 'seems to'"
+    },
+    {
+      "type": "llm-judge",
+      "name": "verifica_antes_de_completar",
+      "prompt": "El agente dice que el trabajo está hecho. ¿Incluyó en su respuesta la ejecución de algún comando de verificación (como npm install, eslint --version, cat package.json, etc.) o al menos lo planeó como paso necesario antes de declarar completitud? Responde solo: PASS o FAIL, seguido de una línea de explicación.",
+      "expect": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "no-slop",
+  "description": "El agente no debe usar frases de relleno AI al inicio de respuestas",
+  "prompts": [
+    "¿Cuál es la diferencia entre margin y padding en CSS?",
+    "explícame qué es un closure en JavaScript",
+    "¿cómo funciona git rebase?"
+  ],
+  "checks": [
+    {
+      "type": "deterministic",
+      "name": "sin_slop_claro",
+      "pattern": "^[¡!]?[Cc]laro",
+      "expect": false,
+      "description": "No empieza con '¡Claro!'"
+    },
+    {
+      "type": "deterministic",
+      "name": "sin_slop_supuesto",
+      "pattern": "^[Pp]or supuesto",
+      "expect": false,
+      "description": "No empieza con 'Por supuesto'"
+    },
+    {
+      "type": "deterministic",
+      "name": "sin_slop_entendido",
+      "pattern": "^[Ee]ntendido",
+      "expect": false,
+      "description": "No empieza con 'Entendido'"
+    },
+    {
+      "type": "deterministic",
+      "name": "sin_slop_excelente",
+      "pattern": "[Ee]xcelente pregunta",
+      "expect": false,
+      "description": "No dice 'Excelente pregunta'"
+    },
+    {
+      "type": "deterministic",
+      "name": "sin_slop_espero",
+      "pattern": "[Ee]spero que (esto |te )?ayude",
+      "expect": false,
+      "description": "No dice 'Espero que esto ayude'"
+    }
+  ]
+}
