@@ -17,7 +17,7 @@
   "images": {
     "blockImages": false
   },
-  "lastChangelogVersion": "0.78.1",
+  "lastChangelogVersion": "0.79.0",
   "memory": {
     "consolidationModel": "anthropic/claude-sonnet-4-6"
   },
