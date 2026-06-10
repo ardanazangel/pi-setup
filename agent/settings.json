@@ -5,7 +5,6 @@
   "editorPaddingX": 2,
   "enableInstallTelemetry": true,
   "extensions": [
-    "~/.pi/agent/extensions/caffeinate.ts",
     "~/.pi/agent/extensions/context-viewer.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
     "~/.pi/agent/extensions/ship.ts",
@@ -21,11 +20,11 @@
     "consolidationModel": "gpt-5.5"
   },
   "packages": [
-    "npm:pi-intercom",
     "npm:pi-zentui",
     "npm:pi-codex-image-gen",
     "npm:pi-hashline-edit",
-    "npm:@ff-labs/pi-fff"
+    "npm:@ff-labs/pi-fff",
+    "npm:@ollama/pi-web-search"
   ],
   "plugins": [],
   "quietStartup": false,

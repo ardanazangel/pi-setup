@@ -5,6 +5,7 @@ node_modules/
 # Sensible
 agent/auth.json
 agent/.env
+.env
 agent/mcp-oauth/
 agent/telegram.json
 

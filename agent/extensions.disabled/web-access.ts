@@ -10,9 +10,9 @@
  *   crawl_site   — Crawl a site recursively and return content of N pages.
  *                   Discovers URLs via sitemap.xml, falls back to link traversal.
  *
- * Config: ~/.pi/web-search.json
+ * Config: ~/.pi/web-search.json + ~/.pi/.env
+ *   .env keys: GEMINI_API_KEY, EXA_API_KEY, PERPLEXITY_API_KEY
  *   {
- *     "geminiApiKey": "...",
  *     "politeness": {
  *       "respectRobotsTxt": true,
  *       "perHostConcurrency": 1,
@@ -39,12 +39,15 @@ const PLAYWRIGHT_PATH = "/Users/angelardanaztirapu/.pi/agent/npm/node_modules/pl
 // ---------------------------------------------------------------------------
 
 const CONFIG_PATH = join(homedir(), ".pi", "web-search.json");
+const ENV_PATH = join(homedir(), ".pi", ".env");
 const SEARCH_MODEL = "gemini-2.5-flash";
 const FETCH_MODEL = "gemini-2.5-flash";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 type WebAccessConfig = {
   geminiApiKey?: string;
+  exaApiKey?: string;
+  perplexityApiKey?: string;
   politeness?: Partial<PolitenessConfig>;
 };
 
@@ -76,8 +79,28 @@ function loadConfig(): WebAccessConfig {
   }
 }
 
+function loadDotEnv(): Record<string, string> {
+  try {
+    const env: Record<string, string> = {};
+    for (const line of readFileSync(ENV_PATH, "utf-8").split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+      if (!match) continue;
+      let value = match[2].trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1);
+      env[match[1]] = value;
+    }
+    return env;
+  } catch {
+    return {};
+  }
+}
+
 function loadApiKey(): string {
-  return loadConfig().geminiApiKey ?? "";
+  const cfg = loadConfig();
+  const env = loadDotEnv();
+  return env.GEMINI_API_KEY ?? cfg.geminiApiKey ?? "";
 }
 
 function loadPolitenessConfig(): PolitenessConfig {

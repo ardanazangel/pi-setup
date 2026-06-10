@@ -13,11 +13,19 @@ function run(cmd: string, args: string[]) {
 	}
 }
 
-function notify() {
-	run("afplay", ["/System/Library/Sounds/Submarine.aiff"]);
+function formatElapsed(seconds: number) {
+	if (seconds < 60) return `${Math.round(seconds)}s`;
+	const minutes = Math.floor(seconds / 60);
+	const rest = Math.round(seconds % 60);
+	return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
+}
+
+function notify(elapsed: number) {
 	run("osascript", [
 		"-e",
-		'display notification "Turno completado" with title "pi"',
+		"use scripting additions",
+		"-e",
+		`display notification ${JSON.stringify(`Listo en ${formatElapsed(elapsed)}`)} with title "pi" subtitle "Turno completado" sound name "Purr"`,
 	]);
 }
 
@@ -30,7 +38,7 @@ export default function notifyExtension(pi: any) {
 		if (turnStart === null) return;
 		const elapsed = (Date.now() - turnStart) / 1000;
 		turnStart = null;
-		if (elapsed >= NOTIFY_MIN_SECONDS) notify();
+		if (elapsed >= NOTIFY_MIN_SECONDS) notify(elapsed);
 	});
 
 	pi.on("session_shutdown", () => {
