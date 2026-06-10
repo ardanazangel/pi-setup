@@ -81,7 +81,6 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | `/workflow <task>` | `workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |
 | `/memory-consolidate` | `memory.ts` | Manual memory consolidation trigger |
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
-| `codex_generate_image` tool | `codex-image.ts` / `npm:pi-codex-image-gen` | Generates bitmap images through Codex image generation |
 | background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
 | prompt/runtime | `autodiscover.ts`, `web-access.ts`, `web-verticals.ts`, `notify.ts` | Dynamic prompt info, web helpers, notifications |
 | background/UI | `context-mode`, `pi-total-recall`, `pi-intercom`, `pi-web-access`, `pi-zentui` | Installed npm packages that add context, session history, web and UI tools |

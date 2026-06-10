@@ -21,7 +21,6 @@
   },
   "packages": [
     "npm:pi-zentui",
-    "npm:pi-codex-image-gen",
     "npm:pi-hashline-edit",
     "npm:@ff-labs/pi-fff",
     "npm:@ollama/pi-web-search"

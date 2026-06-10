@@ -20,28 +20,20 @@
 
 ### Shell
 - **Bash** → comandos cortos con output predecible que consumes entero (`git status`, `which node`, `pwd`).
-- **ctx_execute** → cuando el output puede ser grande o necesitas procesar/filtrar antes de que entre en contexto. Regla: si vas a derivar una respuesta DE los datos, hazlo en código aquí. Casos obligatorios: análisis de múltiples archivos, contar líneas, buscar patrones en codebase, procesar logs, cualquier output cuyo tamaño no puedas predecir.
-- **ctx_batch_execute** → 3+ comandos relacionados en paralelo. Incluye `queries` para obtener respuesta en el mismo round-trip.
 - **Búsqueda en archivos** → usar `fffind` para localizar archivos y `ffgrep` para buscar contenido. Ambas son frecency-ranked y git-aware. No usar `rg`, `grep`, `find` ni `ls` en Bash para búsquedas.
-- **Output grande de herramientas** → si Bash, Read u otra herramienta devuelve >60 líneas, procesar con `ctx_execute`/`ctx_execute_file` en vez de consumir raw. Nunca metas logs, diffs o archivos grandes directamente en contexto.
-- **Pastes del usuario** → si el usuario pega >50 líneas de código o logs en el chat, sugerir activamente escribirlo a un archivo temporal y procesarlo con `ctx_execute_file` antes de responder.
+- **Output grande** → evita meter logs, diffs o archivos grandes directamente en contexto. Filtra o resume antes de responder.
+- **Pastes del usuario** → si el usuario pega >50 líneas de código o logs en el chat, sugerir escribirlo a un archivo temporal antes de analizarlo.
 
 ### Web
-- **web_search** → buscar información, documentación, noticias. Preferir `queries` plural con ángulos distintos.
-- **web_fetch** → obtener HTML crudo de una URL específica cuando sabes exactamente qué quieres.
-- **fetch_content** → obtener contenido legible (markdown) de una URL. Para YouTube/video pasar `prompt` con la pregunta concreta.
-- **ctx_fetch_and_index** → múltiples URLs en paralelo o cuando el contenido es grande y querrás hacer queries sobre él después.
+- **web_search** → buscar información, documentación, noticias. Actualmente lo proporciona Ollama (`@ollama/pi-web-search`) y acepta `query` singular.
+- **web_fetch** → obtener y extraer texto de una URL específica. Actualmente lo proporciona Ollama (`@ollama/pi-web-search`).
 
 ### Memoria y contexto
 - **memory_search** → recuperar preferencias, hechos del usuario, contexto de proyectos establecido en sesiones anteriores.
 - **memory_remember** → guardar una preferencia o hecho nuevo del usuario. Usar key con punto (`pref.x`, `project.y`).
-- **ctx_search** → buscar en el knowledge base indexado de esta sesión o sesiones anteriores.
-- **ctx_index** → indexar documentación, specs, o archivos grandes para poder hacer queries después sin releerlos.
-- **knowledge_search** → buscar en notas locales del knowledge base personal.
 
 ### Sesiones
-- **session_search** → encontrar trabajo anterior, decisiones pasadas, debugging de otra sesión.
-- **session_read** → leer el contenido completo de una sesión específica.
+- Si hay herramientas de búsqueda/lectura de sesiones disponibles, úsalas para recuperar decisiones pasadas antes de asumir contexto histórico.
 
 ### Delegación
 - **subagent** → usar solo cuando aporte valor claro: tareas complejas, investigación amplia, exploración de varios archivos con incertidumbre, comparación de enfoques, o cambios aislados que convenga separar. No lanzar subagentes para tareas simples, búsquedas puntuales, lecturas pequeñas, edición directa de un archivo, ni por defecto en cada cambio de código. Prioriza hacerlo directamente cuando el alcance sea claro y pequeño.
@@ -60,9 +52,10 @@
 
 
 ## Extensiones locales
-- Extensiones activas se declaran en `~/.pi/agent/settings.json`. No documentar una extensión como activa si su archivo `.ts` no existe.
-- Extensiones verificadas actuales: `caffeinate.ts`, `context-viewer.ts`, `questionnaire.ts`, `research.ts`, `ship.ts`, `workflow.ts`.
-- `tool-lint.ts` fue removido; si aparece en memoria antigua, no tratarlo como activo.
+- Extensiones activas se declaran en `~/.pi/agent/settings.json` y paquetes npm en `packages`. No documentar una extensión como activa si su archivo o paquete no existe.
+- Extensiones locales verificadas actuales: `context-viewer.ts`, `questionnaire.ts`, `ship.ts`, `workflow.ts`, `autodiscover.ts`, `notify.ts`.
+- Paquetes activos relevantes: `pi-zentui`, `pi-hashline-edit`, `@ff-labs/pi-fff`, `@ollama/pi-web-search`.
+- `caffeinate.ts`, `web-access.ts`, `web-verticals.ts` y `tool-lint.ts` fueron removidos/desactivados; si aparecen en memoria antigua, no tratarlos como activos.
 - Para búsquedas en extensiones, usar `fffind` y `ffgrep` (no `ls`, `grep`, `find` de Bash).
 
 ## Pi
