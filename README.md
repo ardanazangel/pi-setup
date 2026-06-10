@@ -18,23 +18,19 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
     ├── skills/            # Autodiscovered skills
     │   ├── opinion/       # Direct recommendation style
     │   └── teach/         # Teaching/learning workflow formats
-    └── extensions/
-        ├── autodiscover.ts      # Appends dynamic extension/skill info to the prompt
-        ├── ship.ts             # /ship — git add, scan secrets, commit, push
-        ├── workflow.ts         # /workflow — multi-agent orchestration patterns
-        ├── memory.ts           # /memory-consolidate — memory consolidation
-        ├── web-access.ts       # Web access tooling/config helpers
-        ├── web-verticals.ts    # Vertical web search helpers
-        ├── codex-image.ts      # Codex image generation integration
-        ├── notify.ts           # Desktop/session notifications
-        ├── questionnaire.ts    # questionnaire tool — interactive Q&A UI
-        ├── caffeinate.ts       # Keeps Mac awake while agent is running
-        ├── context-viewer.ts   # /context — token usage grid visualization
-        └── subagents/          # Subagent delegation system
-            ├── index.ts        # Entry point — exposes subagent tool
-            ├── agents/         # planner, scout, researcher, worker, reviewer
-            └── tools/
-                └── safe-bash.ts # Bash with dangerous-command blocking
+    ├── extensions/
+    │   ├── autodiscover.ts      # Dynamic extension/skill info helper
+    │   ├── context-viewer.ts    # /context — token usage grid visualization
+    │   ├── memory.ts            # /memory-consolidate — memory consolidation
+    │   ├── notify.ts            # Desktop/session notifications
+    │   ├── questionnaire.ts     # questionnaire tool — interactive Q&A UI
+    │   ├── ship.ts              # /ship — git add, scan secrets, commit, push
+    │   ├── workflow.ts          # /workflow — multi-agent orchestration patterns
+    │   └── subagents/           # Subagent delegation system
+    │       ├── index.ts        # Entry point — exposes subagent tool
+    │       ├── agents/         # planner, scout, researcher, worker, reviewer
+    │       └── tools/
+    │           └── safe-bash.ts # Bash with dangerous-command blocking
 ```
 
 ## Installation
@@ -46,44 +42,34 @@ cd ~/.pi/agent && npm install
 
 ### Optional — web search
 
-`pi-web-access` (included via packages) supports multiple providers. Create `~/.pi/web-search.json` to configure:
+`@ollama/pi-web-search` provides `web_search` and `web_fetch` through local Ollama web APIs. Create `~/.pi/web-search.json` for optional provider settings:
 
 ```json
 {
-  "allowBrowserCookies": true
-}
-```
-
-With `allowBrowserCookies: true`, Gemini Web is used via Chrome cookies (no API key needed). Requires being signed into `gemini.google.com` in Chrome.
-
-For API-based providers:
-
-```json
-{
-  "exaApiKey": "exa-...",
-  "perplexityApiKey": "pplx-...",
+  "allowBrowserCookies": true,
   "geminiApiKey": "AIza..."
 }
 ```
 
-Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
+YouTube/video fetching works best with `youtube.preferredModel` set to `gemini-2.5-flash` when using Gemini.
 
 ### Optional — local models
 
 `models.json` defines Ollama models. Requires [Ollama](https://ollama.com) running locally.
 
-## Extensions
+## Extensions and packages
 
-| Command / Tool | File | Description |
+| Command / Tool | Source | Description |
 |---|---|---|
-| `/ship` | `ship.ts` | Runs `git add -A`, scans for secrets, auto-commits, pushes |
-| `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
-| `/workflow <task>` | `workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |
-| `/memory-consolidate` | `memory.ts` | Manual memory consolidation trigger |
-| `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
-| background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
-| prompt/runtime | `autodiscover.ts`, `web-access.ts`, `web-verticals.ts`, `notify.ts` | Dynamic prompt info, web helpers, notifications |
-| background/UI | `context-mode`, `pi-total-recall`, `pi-intercom`, `pi-web-access`, `pi-zentui` | Installed npm packages that add context, session history, web and UI tools |
+| `/ship` | `extensions/ship.ts` | Runs `git add -A`, scans for secrets, auto-commits, pushes |
+| `/context` | `extensions/context-viewer.ts` | Token usage breakdown as a grid |
+| `/workflow <task>` | `extensions/workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |
+| `/memory-consolidate` | `extensions/memory.ts` | Manual memory consolidation trigger |
+| `questionnaire` tool | `extensions/questionnaire.ts` | Interactive single/multi-question UI |
+| `find` / `grep` tools | `npm:@ff-labs/pi-fff` | Frecency-ranked, git-aware file and content search |
+| `read` / `edit` tools | `npm:pi-hashline-edit` | Hash-anchored file reads and surgical edits |
+| `web_search` / `web_fetch` tools | `npm:@ollama/pi-web-search` | Ollama-backed web search and page extraction |
+| UI/runtime | `npm:pi-zentui`, `autodiscover.ts`, `notify.ts` | UI helpers, dynamic prompt info, notifications |
 
 ## Workflows
 
@@ -119,7 +105,7 @@ The `subagent` tool delegates tasks to specialized agents:
 |---|---|---|---|
 | `planner` | sonnet | read, find/grep | Plans and decomposes work |
 | `scout` | haiku | read, find/grep | Fast codebase exploration |
-| `researcher` | sonnet | web_search, fetch_content | Web research & synthesis |
+| `researcher` | sonnet | web_search, web_fetch | Web research & synthesis |
 | `worker` | sonnet | read, write, edit, bash | Autonomous code changes |
 | `reviewer` | sonnet | read, find/grep | Review, verification, critique |
 
