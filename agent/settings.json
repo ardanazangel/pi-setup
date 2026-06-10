@@ -1,6 +1,6 @@
 {
-  "defaultModel": "claude-sonnet-4-6",
-  "defaultProvider": "anthropic",
+  "defaultModel": "gpt-5.5",
+  "defaultProvider": "openai-codex",
   "defaultThinkingLevel": "low",
   "editorPaddingX": 2,
   "enableInstallTelemetry": true,
@@ -8,7 +8,6 @@
     "~/.pi/agent/extensions/caffeinate.ts",
     "~/.pi/agent/extensions/context-viewer.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
-    "~/.pi/agent/extensions/research.ts",
     "~/.pi/agent/extensions/ship.ts",
     "~/.pi/agent/extensions/workflow.ts"
   ],
@@ -17,17 +16,16 @@
   "images": {
     "blockImages": false
   },
-  "lastChangelogVersion": "0.79.0",
+  "lastChangelogVersion": "0.79.1",
   "memory": {
-    "consolidationModel": "anthropic/claude-sonnet-4-6"
+    "consolidationModel": "gpt-5.5"
   },
   "packages": [
-    "npm:context-mode",
-    "npm:pi-total-recall",
     "npm:pi-intercom",
-    "npm:pi-web-access",
     "npm:pi-zentui",
-    "npm:pi-codex-image-gen"
+    "npm:pi-codex-image-gen",
+    "npm:pi-hashline-edit",
+    "npm:@ff-labs/pi-fff"
   ],
   "plugins": [],
   "quietStartup": false,

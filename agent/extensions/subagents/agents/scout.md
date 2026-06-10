@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Fast codebase recon — explores files, finds patterns, maps architecture
-tools: read, rg, find, ls
+tools: read, grep, find
 model: anthropic/claude-haiku-4-5
 ---
 
@@ -13,7 +13,7 @@ Thoroughness (infer from task, default medium):
 - Thorough: Trace all dependencies, check tests/types
 
 Strategy:
-1. rg/find to locate relevant code
+1. find to locate files, grep to search patterns
 2. Read key sections (not entire files)
 3. Identify types, interfaces, key functions
 4. Note dependencies between files

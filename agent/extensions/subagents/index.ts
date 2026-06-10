@@ -1,7 +1,7 @@
 /**
  * Minimal subagents extension.
  *
- * Registers a single `subagent` tool with three agents: scout, researcher, worker.
+ * Registers a single `subagent` tool with local agents plus optional user/project agent discovery.
  * Supports single and parallel execution. Output is verbal only (no file handoff).
  */
 import { spawn } from "node:child_process";
@@ -15,6 +15,8 @@ import { Type } from "typebox";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+export type AgentScope = "local" | "user" | "project" | "both" | "all";
+
 export interface AgentConfig {
 	name: string;
 	description: string;
@@ -22,6 +24,7 @@ export interface AgentConfig {
 	model: string;
 	systemPrompt: string;
 	filePath: string;
+	source: "local" | "user" | "project" | "registered";
 }
 
 interface ToolEvent {
@@ -54,7 +57,7 @@ interface AgentResult {
 }
 
 interface Details {
-	mode: "single" | "parallel";
+	mode: "single" | "parallel" | "chain";
 	results: AgentResult[];
 }
 
@@ -93,18 +96,17 @@ const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
 	code_search: WEB_ACCESS_EXT,
 	get_search_content: WEB_ACCESS_EXT,
 	safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
-	rg: path.join(TOOLS_DIR, "rg.ts"),
 };
 
 // ── Agent Discovery & Registration ────────────────────────────────────
 
 let agents: AgentConfig[] = [];
 
-export function registerAgent(config: AgentConfig): void {
+export function registerAgent(config: Omit<AgentConfig, "source"> & { source?: AgentConfig["source"] }): void {
 	if (agents.find((a) => a.name === config.name)) {
 		throw new Error(`Agent already registered: ${config.name}`);
 	}
-	agents.push(config);
+	agents.push({ ...config, source: config.source ?? "registered" });
 }
 
 export function unregisterAgent(name: string): void {
@@ -115,29 +117,57 @@ export function unregisterAgent(name: string): void {
 // (which creates separate module instances) can access the shared agents array.
 (globalThis as any).__pi_subagents = { registerAgent, unregisterAgent };
 
-function loadAgents(): AgentConfig[] {
-	const agents: AgentConfig[] = [];
-	if (!fs.existsSync(AGENTS_DIR)) return agents;
-	for (const entry of fs.readdirSync(AGENTS_DIR)) {
+function loadAgentsFromDir(dir: string, source: AgentConfig["source"]): AgentConfig[] {
+	const loaded: AgentConfig[] = [];
+	if (!fs.existsSync(dir)) return loaded;
+	for (const entry of fs.readdirSync(dir)) {
 		if (!entry.endsWith(".md")) continue;
-		const filePath = path.join(AGENTS_DIR, entry);
-		const content = fs.readFileSync(filePath, "utf-8");
+		const filePath = path.join(dir, entry);
+		let content = "";
+		try { content = fs.readFileSync(filePath, "utf-8"); } catch { continue; }
 		const { frontmatter, body } = parseFrontmatter<Record<string, string>>(content);
 		if (!frontmatter.name) continue;
 		const tools = (frontmatter.tools || "")
 			.split(",")
 			.map((t) => t.trim())
 			.filter(Boolean);
-		agents.push({
+		loaded.push({
 			name: frontmatter.name,
 			description: frontmatter.description || "",
 			tools,
-			model: frontmatter.model || "anthropic/claude-sonnet-4-6",
+			model: frontmatter.model || "gpt-5.5",
 			systemPrompt: body,
 			filePath,
+			source,
 		});
 	}
-	return agents;
+	return loaded;
+}
+
+function findNearestProjectAgentsDir(cwd: string): string | null {
+	let current = cwd;
+	while (true) {
+		const candidate = path.join(current, ".pi", "agents");
+		try { if (fs.statSync(candidate).isDirectory()) return candidate; } catch {}
+		const parent = path.dirname(current);
+		if (parent === current) return null;
+		current = parent;
+	}
+}
+
+function loadAgents(cwd: string, scope: AgentScope = "local"): AgentConfig[] {
+	const localAgents = scope === "user" || scope === "project" ? [] : loadAgentsFromDir(AGENTS_DIR, "local");
+	const userDir = path.join(PI_HOME, "agent", "agents");
+	const userAgents = scope === "local" || scope === "project" ? [] : loadAgentsFromDir(userDir, "user");
+	const projectDir = findNearestProjectAgentsDir(cwd);
+	const projectAgents = scope === "local" || scope === "user" || !projectDir ? [] : loadAgentsFromDir(projectDir, "project");
+
+	const agentMap = new Map<string, AgentConfig>();
+	for (const agent of localAgents) agentMap.set(agent.name, agent);
+	for (const agent of userAgents) agentMap.set(agent.name, agent);
+	for (const agent of projectAgents) agentMap.set(agent.name, agent);
+	for (const agent of agents.filter((a) => a.source === "registered")) agentMap.set(agent.name, agent);
+	return [...agentMap.values()];
 }
 
 // ── Pi Binary Resolution ──────────────────────────────────────────────
@@ -716,18 +746,18 @@ async function removeWorktree(worktreeDir: string, baseDir: string): Promise<voi
 export default function (pi: ExtensionAPI) {
 	const config = loadConfig();
 	const maxConcurrency = config.maxConcurrency ?? DEFAULT_MAX_CONCURRENCY;
-	agents = loadAgents();
+	agents = loadAgents(process.cwd());
 
 	pi.registerTool({
 		name: "subagent",
 		label: "Subagent",
 		description:
-			"Run a subagent to complete a task. Subagents have NO context from the current conversation — include all necessary context in the task description.",
+			"Run specialized subagents with isolated context. Supports single, parallel tasks[], and chain[] workflows with optional agentScope discovery.",
 		promptSnippet: "Run subagents for delegated tasks",
 		promptGuidelines: [
 			"Parallel tool calls are your primary parallelism mechanism — put multiple independent read/fetch/search calls in one function_calls block. Don't use subagents to parallelize simple I/O.",
 			"Use subagent to delegate *reasoning and decisions*: codebase exploration (scout), web research (researcher), or isolated code changes (worker)",
-			"For multiple independent subagent tasks, use parallel mode with tasks[] array",
+			"For multiple independent subagent tasks, use parallel mode with tasks[] array; for dependent workflows, use chain[] with {previous} placeholder",
 			"Subagents have NO context from the current conversation — include ALL necessary context in the task description",
 			"SCALE EFFORT TO COMPLEXITY — simple fact-finding: 1 subagent; direct comparison: 2-3 subagents; broad research: 4+ subagents with clearly divided responsibilities. Don't over-invest in simple queries.",
 			"DELEGATION QUALITY — each task description must include: (1) specific objective, (2) expected output format, (3) what sources/tools to prioritize, (4) explicit scope boundaries to prevent overlap with other subagents. Vague tasks cause duplicate work and gaps.",
@@ -747,19 +777,100 @@ export default function (pi: ExtensionAPI) {
 					{ description: "PARALLEL mode: array of {agent, task} objects" },
 				),
 			),
+			chain: Type.Optional(
+				Type.Array(
+					Type.Object({
+						agent: Type.String({ description: "Name of the agent to invoke" }),
+						task: Type.String({ description: "Task description; use {previous} to include prior output" }),
+						cwd: Type.Optional(Type.String({ description: "Working directory for the agent process" })),
+					}),
+					{ description: "CHAIN mode: sequential array of {agent, task}; {previous} is replaced with prior output" },
+				),
+			),
+			agentScope: Type.Optional(Type.Union([Type.Literal("local"), Type.Literal("user"), Type.Literal("project"), Type.Literal("both"), Type.Literal("all")], { description: "Agent directories to load. local=extension agents only (default); user=~/.pi/agent/agents; project=.pi/agents; both=user+project; all=local+user+project" })),
+			confirmProjectAgents: Type.Optional(Type.Boolean({ description: "Prompt before running project-local agents. Default: true", default: true })),
 			cwd: Type.Optional(Type.String({ description: "Working directory for the agent process (single mode)" })),
 		}),
 
 		async execute(toolCallId, params, signal, onUpdate, ctx) {
 			const cwd = ctx.cwd;
+			const agentScope = (params.agentScope ?? "local") as AgentScope;
+			agents = loadAgents(cwd, agentScope);
+			const available = agents.map((a) => `${a.name}${a.source === "local" ? "" : ` (${a.source})`}`).join(", ") || "none";
+
+			const requestedNames = [
+				...(params.tasks ?? []).map((t: any) => t.agent),
+				...(params.chain ?? []).map((t: any) => t.agent),
+				...(params.agent ? [params.agent] : []),
+			];
+			const projectAgentsRequested = agents.filter((a) => a.source === "project" && requestedNames.includes(a.name));
+			if (projectAgentsRequested.length > 0 && params.confirmProjectAgents !== false) {
+				const names = projectAgentsRequested.map((a) => a.name).join(", ");
+				const ok = await (ctx.ui as any).confirm?.(
+					"Run project-local agents?",
+					`Agents: ${names}\n\nProject agents come from repo-controlled .pi/agents. Continue only for trusted repositories.`,
+				);
+				if (ok === false) {
+					return { content: [{ type: "text", text: "Canceled: project-local agents not approved." }], details: { mode: "single" as const, results: [] } };
+				}
+			}
 
 			// Validate mode
+			if (params.chain && params.chain.length > 0) {
+				// ── Chain mode ──
+				const chainList = params.chain;
+				for (const step of chainList) {
+					if (!agents.find((a) => a.name === step.agent)) {
+						throw new Error(`Unknown agent: ${step.agent}. Available agents: ${available}`);
+					}
+				}
+
+				const results: AgentResult[] = [];
+				let previousOutput = "";
+				for (let i = 0; i < chainList.length; i++) {
+					const step = chainList[i];
+					const agent = agents.find((a) => a.name === step.agent)!;
+					const task = step.task.includes("{previous}")
+						? step.task.replaceAll("{previous}", previousOutput)
+						: previousOutput
+							? `${step.task}\n\nPrevious output:\n${previousOutput}`
+							: step.task;
+					const liveResult: AgentResult = {
+						agent: step.agent,
+						task,
+						output: "",
+						exitCode: -1,
+						model: agent.model,
+						usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, turns: 0 },
+						progress: { agent: step.agent, status: "running" as const, task, recentTools: [], toolCount: 0, tokens: 0, durationMs: 0, lastMessage: "" },
+					};
+					results.push(liveResult);
+					const result = await runSubagent(agent, task, step.cwd ?? cwd, signal, (progress) => {
+						liveResult.progress = progress;
+						onUpdate?.({ content: [{ type: "text", text: `Chain: step ${i + 1}/${chainList.length} (${step.agent})...` }], details: { mode: "chain" as const, results: [...results] } });
+					});
+					results[i] = result;
+					previousOutput = result.output || "";
+					onUpdate?.({ content: [{ type: "text", text: `Chain: step ${i + 1}/${chainList.length} done` }], details: { mode: "chain" as const, results: [...results] } });
+					if (result.exitCode !== 0 || result.progress.error) break;
+				}
+
+				const outputParts = results.map((r, i) => {
+					const header = `## Step ${i + 1}: ${r.agent}${r.exitCode !== 0 ? " (FAILED)" : ""}`;
+					return `${header}\n\n${r.output || "(no output)"}`;
+				});
+				const failed = results.some((r) => r.exitCode !== 0 || !!r.progress.error);
+				return {
+					content: [{ type: "text", text: outputParts.join("\n\n---\n\n") }],
+					details: { mode: "chain" as const, results },
+					...(failed ? { isError: true } : {}),
+				};
+			} else
 			if (params.tasks && params.tasks.length > 0) {
 				// ── Parallel mode ──
 				const taskList = params.tasks;
 
 				// Validate all agents
-				const available = agents.map((a) => a.name).join(", ") || "none";
 				for (const t of taskList) {
 					if (!agents.find((a) => a.name === t.agent)) {
 						throw new Error(`Unknown agent: ${t.agent}. Available agents: ${available}`);
@@ -889,12 +1000,19 @@ export default function (pi: ExtensionAPI) {
 					...(isError ? { isError: true } : {}),
 				};
 			} else {
-				throw new Error("Provide either (agent + task) for single mode, or tasks[] for parallel mode.");
+				throw new Error("Provide either (agent + task) for single mode, tasks[] for parallel mode, or chain[] for sequential mode.");
 			}
 		},
 
 		// ── Render: tool call header ──
 		renderCall(args, theme, _context) {
+			if (args.chain && args.chain.length > 0) {
+				const agentNames = args.chain.map((t: any) => t.agent).join(" -> ");
+				return new Text(
+					`${theme.fg("toolTitle", theme.bold("subagent"))} ${theme.fg("accent", "chain")} ${theme.fg("dim", `(${args.chain.length} steps: ${agentNames})`)}`,
+					0, 0,
+				);
+			}
 			if (args.tasks && args.tasks.length > 0) {
 				const agentNames = args.tasks.map((t: any) => t.agent).join(", ");
 				return new Text(
@@ -927,7 +1045,7 @@ export default function (pi: ExtensionAPI) {
 			const expanded = options.expanded;
 			const c = new Container();
 
-			if (details.mode === "parallel") {
+			if (details.mode === "parallel" || details.mode === "chain") {
 				// Parallel summary header
 				const ok = details.results.filter((r) => r.exitCode === 0).length;
 				const running = details.results.filter((r) => r.progress?.status === "running").length;
@@ -942,7 +1060,7 @@ export default function (pi: ExtensionAPI) {
 				c.addChild(
 					new Text(
 						truncLine(
-							`${totalIcon} ${theme.fg("toolTitle", theme.bold("parallel"))} ${ok}/${details.results.length} completed · ${formatTokens(totalTokens)} tok · ${formatDuration(totalDuration)}`,
+							`${totalIcon} ${theme.fg("toolTitle", theme.bold(details.mode))} ${ok}/${details.results.length} completed · ${formatTokens(totalTokens)} tok · ${formatDuration(totalDuration)}`,
 							w,
 						),
 						0, 0,

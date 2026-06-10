@@ -1,12 +1,14 @@
 # Minimal Subagents
 
-A pi extension that registers a single `subagent` tool with three agents:
+A pi extension that registers a single `subagent` tool with local agents plus optional user/project agent discovery:
 
 | Agent | Tools | Model | Purpose |
 |-------|-------|-------|---------|
-| **scout** | read, rg, find, ls | claude-haiku-4-5 | Fast codebase recon |
-| **researcher** | web_search, fetch_content | claude-sonnet-4-6 | Web research |
-| **worker** | read, write, edit, safe_bash | claude-sonnet-4-6 | Code changes |
+| **scout** | read, grep, find | claude-haiku-4-5 | Fast codebase recon |
+| **planner** | read, grep, find | gpt-5.5 | Implementation plans |
+| **researcher** | web_search, fetch_content | gpt-5.5 | Web research |
+| **worker** | read, write, edit, safe_bash | gpt-5.5 | Code changes |
+| **reviewer** | read, grep, find, safe_bash | gpt-5.5 | Code review |
 
 ## Usage
 
@@ -22,6 +24,17 @@ A pi extension that registers a single `subagent` tool with three agents:
   { "agent": "researcher", "task": "Best practices for connection pooling" }
 ]}
 ```
+
+**Chain mode:**
+```json
+{ "chain": [
+  { "agent": "scout", "task": "Map auth files" },
+  { "agent": "planner", "task": "Plan implementation from this: {previous}" },
+  { "agent": "reviewer", "task": "Review the plan: {previous}" }
+]}
+```
+
+**Agent discovery:** pass `agentScope` as `local` (default), `user`, `project`, `both`, or `all`. Project agents from `.pi/agents` ask confirmation unless `confirmProjectAgents: false`.
 
 Max 4 concurrent subagents (configurable). Each runs as an isolated `pi` process with no inherited context — all context must be in the task description.
 
@@ -60,7 +73,7 @@ Frontmatter fields:
 - **name** (required) — unique agent name, used in `{ agent: "my-agent" }` calls
 - **description** — short description
 - **tools** — comma-separated list of tools the agent needs (builtin or extension)
-- **model** — model identifier (defaults to `anthropic/claude-sonnet-4-6`)
+- **model** — model identifier (defaults to `gpt-5.5`)
 
 The markdown body becomes the agent's system prompt.
 
@@ -103,7 +116,7 @@ function registerMyAgents(): void {
         name: frontmatter.name,
         description: frontmatter.description || "",
         tools,
-        model: frontmatter.model || "anthropic/claude-sonnet-4-6",
+        model: frontmatter.model || "gpt-5.5",
         systemPrompt: body,
         filePath,
       });
@@ -122,17 +135,13 @@ If your agents need tools beyond the built-in set, those tools must be mapped in
 
 ```typescript
 const CUSTOM_TOOL_EXTENSIONS: Record<string, string> = {
-  web_search: path.join(EXT_BASE, "web-search", "index.ts"),
-  web_search: WEB_ACCESS_EXT, fetch_content: WEB_ACCESS_EXT,
+  web_search: WEB_ACCESS_EXT,
+  fetch_content: WEB_ACCESS_EXT,
   safe_bash: path.join(TOOLS_DIR, "safe-bash.ts"),
-  rg: path.join(TOOLS_DIR, "rg.ts"),
-  video_extract: path.join(EXT_BASE, "video-extract", "index.ts"),
-  youtube_search: path.join(EXT_BASE, "youtube-search", "index.ts"),
-  google_image_search: path.join(EXT_BASE, "google-image-search", "index.ts"),
 };
 ```
 
-Built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`) work automatically. Custom tools like `rg` need a corresponding entry here pointing to their extension file.
+Built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`) work automatically. Custom tools need a corresponding entry here pointing to their extension file.
 
 ## Structure
 
@@ -141,6 +150,5 @@ subagents/
 ├── index.ts           # Extension entry point
 ├── agents/            # Built-in agent configs (frontmatter + system prompt)
 └── tools/             # Extensions loaded into subagent processes
-    ├── rg.ts          # ripgrep search
     └── safe-bash.ts   # bash with dangerous command blocking
 ```

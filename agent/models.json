@@ -7,8 +7,7 @@
       "models": [
         {
           "_launch": true,
-          "contextWindow": 131072,
-          "id": "gpt-oss:20b",
+          "id": "gemma4:latest",
           "input": [
             "text"
           ],
@@ -16,18 +15,16 @@
         },
         {
           "_launch": true,
-          "contextWindow": 131072,
-          "id": "gemma4",
+          "id": "gemma4:26b",
           "input": [
-            "text",
-            "image"
+            "text"
           ],
           "reasoning": true
         },
         {
           "_launch": true,
           "contextWindow": 262144,
-          "id": "qwen3.5:9b",
+          "id": "qwen3.5:latest",
           "input": [
             "text",
             "image"

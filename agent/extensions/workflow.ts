@@ -8,9 +8,9 @@
  * --quick is an alias for --quality fast
  *
  * Quality tiers:
- *   fast     — haiku for all agents (cheap, 3-5x faster)
- *   balanced — haiku for scout, sonnet for worker/researcher (default)
- *   best     — sonnet for scout, opus for worker/researcher (max quality)
+ *   fast     — fast local/default model for all agents
+ *   balanced — fast scout, default model for worker/researcher (default)
+ *   best     — default model for all agents (max local reliability)
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -26,21 +26,24 @@ const AGENTS_DIR = path.join(
   "subagents/agents"
 );
 
+const DEFAULT_MODEL = "gpt-5.5";
+const FAST_MODEL = "anthropic/claude-haiku-4-5";
+
 const MODEL_TIERS: Record<Quality, Record<string, string>> = {
   fast: {
-    scout:      "anthropic/claude-haiku-4-5",
-    researcher: "anthropic/claude-haiku-4-5",
-    worker:     "anthropic/claude-haiku-4-5",
+    scout:      FAST_MODEL,
+    researcher: FAST_MODEL,
+    worker:     FAST_MODEL,
   },
   balanced: {
-    scout:      "anthropic/claude-haiku-4-5",
-    researcher: "anthropic/claude-sonnet-4-6",
-    worker:     "anthropic/claude-sonnet-4-6",
+    scout:      FAST_MODEL,
+    researcher: DEFAULT_MODEL,
+    worker:     DEFAULT_MODEL,
   },
   best: {
-    scout:      "anthropic/claude-sonnet-4-6",
-    researcher: "anthropic/claude-opus-4-8",
-    worker:     "anthropic/claude-opus-4-8",
+    scout:      DEFAULT_MODEL,
+    researcher: DEFAULT_MODEL,
+    worker:     DEFAULT_MODEL,
   },
 };
 
