@@ -15,20 +15,24 @@ My personal [pi](https://github.com/mariozechner/pi) coding agent configuration.
     ├── SYSTEM.md          # System prompt injected on every session
     ├── settings.json      # pi settings (model, extensions, packages, theme)
     ├── models.json        # Local Ollama model definitions
+    ├── skills/            # Autodiscovered skills
+    │   ├── opinion/       # Direct recommendation style
+    │   └── teach/         # Teaching/learning workflow formats
     └── extensions/
-        ├── ship.ts              # /ship — git add, scan secrets, commit, push
-        ├── research.ts          # /research — deep web research workflow
-        ├── questionnaire.ts     # questionnaire tool — interactive Q&A UI
-        ├── caffeinate.ts        # Keeps Mac awake while agent is running
-        ├── context-viewer.ts    # /context — token usage grid visualization
-        ├── workflow.ts          # /workflow — multi-agent orchestration patterns
-        ├── codex-image-gen-install.json # pi-codex-image-gen install state
-        └── subagents/           # Subagent delegation system
-            ├── index.ts         # Entry point — exposes subagent tool
-            ├── agents/
-            │   ├── scout.md     # Fast codebase recon (haiku)
-            │   ├── researcher.md # Web research specialist (sonnet)
-            │   └── worker.md    # General-purpose code worker (sonnet)
+        ├── autodiscover.ts      # Appends dynamic extension/skill info to the prompt
+        ├── ship.ts             # /ship — git add, scan secrets, commit, push
+        ├── workflow.ts         # /workflow — multi-agent orchestration patterns
+        ├── memory.ts           # /memory-consolidate — memory consolidation
+        ├── web-access.ts       # Web access tooling/config helpers
+        ├── web-verticals.ts    # Vertical web search helpers
+        ├── codex-image.ts      # Codex image generation integration
+        ├── notify.ts           # Desktop/session notifications
+        ├── questionnaire.ts    # questionnaire tool — interactive Q&A UI
+        ├── caffeinate.ts       # Keeps Mac awake while agent is running
+        ├── context-viewer.ts   # /context — token usage grid visualization
+        └── subagents/          # Subagent delegation system
+            ├── index.ts        # Entry point — exposes subagent tool
+            ├── agents/         # planner, scout, researcher, worker, reviewer
             └── tools/
                 └── safe-bash.ts # Bash with dangerous-command blocking
 ```
@@ -73,12 +77,13 @@ Provider priority (auto): Exa → Perplexity → Gemini API → Gemini Web.
 | Command / Tool | File | Description |
 |---|---|---|
 | `/ship` | `ship.ts` | Runs `git add -A`, scans for secrets, auto-commits, pushes |
-| `/research <query>` | `research.ts` | Multi-step web research with synthesis |
 | `/context` | `context-viewer.ts` | Token usage breakdown as a grid |
 | `/workflow <task>` | `workflow.ts` | Multi-agent orchestration with configurable patterns and quality tiers |
+| `/memory-consolidate` | `memory.ts` | Manual memory consolidation trigger |
 | `questionnaire` tool | `questionnaire.ts` | Interactive single/multi-question UI |
-| `codex_generate_image` tool | `npm:pi-codex-image-gen` | Generates bitmap images through Codex image generation |
+| `codex_generate_image` tool | `codex-image.ts` / `npm:pi-codex-image-gen` | Generates bitmap images through Codex image generation |
 | background | `caffeinate.ts` | Prevents macOS sleep during agent runs |
+| prompt/runtime | `autodiscover.ts`, `web-access.ts`, `web-verticals.ts`, `notify.ts` | Dynamic prompt info, web helpers, notifications |
 | background/UI | `context-mode`, `pi-total-recall`, `pi-intercom`, `pi-web-access`, `pi-zentui` | Installed npm packages that add context, session history, web and UI tools |
 
 ## Workflows
@@ -109,13 +114,15 @@ Quality tiers control which model each agent uses:
 
 ## Subagents
 
-The `subagent` tool delegates tasks to one of three specialized agents:
+The `subagent` tool delegates tasks to specialized agents:
 
 | Agent | Model | Tools | Use for |
 |---|---|---|---|
-| `scout` | haiku | read, rg, find, ls | Fast codebase exploration |
-| `researcher` | sonnet | web_search, web_fetch | Web research & synthesis |
-| `worker` | sonnet | read, write, edit, safe_bash | Autonomous code changes |
+| `planner` | sonnet | read, find/grep | Plans and decomposes work |
+| `scout` | haiku | read, find/grep | Fast codebase exploration |
+| `researcher` | sonnet | web_search, fetch_content | Web research & synthesis |
+| `worker` | sonnet | read, write, edit, bash | Autonomous code changes |
+| `reviewer` | sonnet | read, find/grep | Review, verification, critique |
 
 ```json
 { "agent": "scout", "task": "find all API route definitions" }
@@ -188,7 +195,7 @@ Para extensiones, añade los invariantes en `BEHAVIORAL_CHECKS` dentro de `run-e
 
 ## Notes
 
-- Default runtime is configured in `agent/settings.json`; current package set includes `pi-codex-image-gen`
+- Default runtime is configured in `agent/settings.json`
 - Generated images are ignored via `agent/generated-images/`
 - `telegram.json`, `auth.json` and other secrets are gitignored
 - `context-mode/`, `memory/`, `session-search/`, `sessions/` and other runtime dirs are gitignored
