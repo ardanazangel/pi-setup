@@ -8,7 +8,8 @@
     "~/.pi/agent/extensions/context-viewer.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
     "~/.pi/agent/extensions/ship.ts",
-    "~/.pi/agent/extensions/workflow.ts"
+    "~/.pi/agent/extensions/workflow.ts",
+    "~/.pi/agent/extensions/deltalog.ts"
   ],
   "followUpMode": "one-at-a-time",
   "hideThinkingBlock": true,

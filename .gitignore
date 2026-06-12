@@ -30,6 +30,7 @@ memory/
 pi-acp/
 scheduler/
 session-search/
+.pi/deltalog/
 
 # misc
 **/*.log
