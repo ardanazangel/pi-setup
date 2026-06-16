@@ -23,6 +23,8 @@ agent/bin/
 agent/packages/
 agent/npm/
 agent/generated-images/
+agent/fff/
+.supermemory/
 
 # context-mode runtime
 context-mode/

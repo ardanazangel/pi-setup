@@ -1,30 +1,33 @@
 {
-  "defaultModel": "gpt-5.5",
-  "defaultProvider": "openai-codex",
-  "defaultThinkingLevel": "low",
+  "defaultModel": "claude-opus-4-8",
+  "defaultProvider": "anthropic",
+  "defaultThinkingLevel": "minimal",
   "editorPaddingX": 2,
-  "enableInstallTelemetry": true,
+  "enableInstallTelemetry": false,
   "extensions": [
+    "~/.pi/agent/extensions/codex-image.ts",
     "~/.pi/agent/extensions/context-viewer.ts",
+    "~/.pi/agent/extensions/memory.ts",
+    "~/.pi/agent/extensions/notify.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
+    "~/.pi/agent/extensions/ssh-manager.ts",
     "~/.pi/agent/extensions/ship.ts",
-    "~/.pi/agent/extensions/workflow.ts",
-    "~/.pi/agent/extensions/deltalog.ts"
+    "~/.pi/agent/extensions/workflow.ts"
   ],
   "followUpMode": "one-at-a-time",
   "hideThinkingBlock": true,
   "images": {
     "blockImages": false
   },
-  "lastChangelogVersion": "0.79.1",
+  "lastChangelogVersion": "0.79.4",
   "memory": {
     "consolidationModel": "gpt-5.5"
   },
   "packages": [
-    "npm:pi-zentui",
     "npm:pi-hashline-edit",
     "npm:@ff-labs/pi-fff",
-    "npm:@ollama/pi-web-search"
+    "npm:@ollama/pi-web-search",
+    "npm:pi-rtk-optimizer"
   ],
   "plugins": [],
   "quietStartup": false,
