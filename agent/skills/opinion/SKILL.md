@@ -5,7 +5,7 @@ description: Give a direct, concise opinion. Use whenever the user asks for Clau
 
 Take a clear stance. Pick a side.
 
-Avoid: "depende", "ambas opciones tienen sus ventajas", "en última instancia tú decides", "it depends on your use case". These are non-answers. If context is truly missing and it would flip the answer, ask one specific question — don't hedge.
+Avoid: "it depends", "both options have their advantages", "ultimately it's your call", "it depends on your use case". These are non-answers. If context is truly missing and it would flip the answer, ask one specific question — don't hedge.
 
 Structure:
 1. Your take — one sentence, direct.

@@ -2,15 +2,15 @@
 
 /**
  * Pi Agent Eval Runner
- * Evalúa si el agente sigue los comportamientos definidos en SYSTEM.md
+ * Evaluates whether the agent follows the behaviors defined in SYSTEM.md
  *
- * Usa el CLI de pi para las llamadas LLM — funciona con cualquier provider
+ * Uses the pi CLI for LLM calls — works with any provider
  * configurado en agent/settings.json (Anthropic, OpenAI, Gemini, etc.)
  *
  * Uso:
  *   node ~/.pi/evals/run.js              # todos los casos
- *   node ~/.pi/evals/run.js 01-no-slop   # caso específico
- *   node ~/.pi/evals/run.js --compare    # compara últimos dos runs
+ *   node ~/.pi/evals/run.js 01-no-slop   # specific case
+ *   node ~/.pi/evals/run.js --compare    # compare last two runs
  */
 
 import fs from 'fs';
@@ -25,7 +25,7 @@ const SYSTEM_MD = path.join(__dirname, '../agent/SYSTEM.md');
 
 // ─── LLM call via pi CLI ──────────────────────────────────────────────────────
 // Delega al CLI de pi, que usa el provider/model de settings.json.
-// Funciona con cualquier provider sin cambiar este archivo.
+// Works with any provider without changing this file.
 
 async function callLLM(systemPrompt, userPrompt) {
   const tmpSystem = path.join(RESULTS_DIR, `_tmp_system_${Date.now()}.md`);
@@ -53,7 +53,7 @@ function checkDeterministic(response, check) {
       name: check.name,
       description: check.description,
       passed,
-      detail: matches ? `Patrón encontrado: /${check.pattern}/` : `Patrón no encontrado: /${check.pattern}/`,
+      detail: matches ? `Pattern found: /${check.pattern}/` : `Pattern not found: /${check.pattern}/`,
     };
   }
   if (check.maxLength !== undefined) {
@@ -62,7 +62,7 @@ function checkDeterministic(response, check) {
       name: check.name,
       description: check.description,
       passed,
-      detail: `Longitud: ${response.length} chars (máx ${check.maxLength})`,
+      detail: `Length: ${response.length} chars (max ${check.maxLength})`,
     };
   }
   return { name: check.name, passed: false, detail: 'Check mal configurado' };
@@ -71,7 +71,7 @@ function checkDeterministic(response, check) {
 async function checkLLMJudge(response, check) {
   const judgePrompt = `${check.prompt}\n\n---\nRESPUESTA DEL AGENTE:\n${response}`;
   const judgment = await callLLM(
-    'Eres un evaluador estricto. Responde únicamente con PASS o FAIL seguido de una línea de explicación. Nada más.',
+    'You are a strict evaluator. Respond only with PASS or FAIL followed by one line of explanation. Nothing else.',
     judgePrompt
   );
   const passed = judgment.trim().startsWith('PASS');
@@ -155,7 +155,7 @@ function compareRuns() {
     .slice(-2);
 
   if (files.length < 2) {
-    console.log('Necesitas al menos 2 runs para comparar.');
+    console.log('You need at least 2 runs to compare.');
     return;
   }
 
@@ -207,7 +207,7 @@ async function main() {
   if (args.length > 0 && !args[0].startsWith('--')) {
     caseFiles = caseFiles.filter(f => f.includes(args[0]));
     if (caseFiles.length === 0) {
-      console.error(`No se encontró caso: ${args[0]}`);
+      console.error(`Case not found: ${args[0]}`);
       process.exit(1);
     }
   }

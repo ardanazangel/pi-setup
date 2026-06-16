@@ -120,63 +120,63 @@ The `subagent` tool delegates tasks to specialized agents:
 
 ## Evals
 
-El sistema de evals vive en `~/.pi/evals/` y testea que los cambios en `SYSTEM.md` y extensiones no introduzcan regresiones.
+The eval system lives in `~/.pi/evals/` and tests that changes to `SYSTEM.md` and extensions don't introduce regressions.
 
-### Estructura
+### Structure
 
 ```
 evals/
-├── run.js               # Runner de evals LLM (comportamiento del agente)
-├── run-extensions.js    # Runner de evals de extensiones (código)
-├── cases/               # Casos de prueba para comportamiento LLM
+├── run.js               # LLM eval runner (agent behavior)
+├── run-extensions.js    # Extension eval runner (code)
+├── cases/               # Test cases for LLM behavior
 │   ├── 01-no-slop.json
 │   ├── 02-no-emojis.json
 │   ├── 03-no-commit-sin-permiso.json
 │   ├── 04-verificacion-antes-de-completar.json
 │   ├── 05-conciseness.json
 │   └── 06-tool-selection.json
-└── results/             # Resultados históricos por run (gitignored)
+└── results/             # Historical results per run (gitignored)
 ```
 
-### Uso
+### Usage
 
 ```bash
-# Correr todos los casos LLM
+# Run all LLM cases
 node ~/.pi/evals/run.js
 
-# Caso específico
+# Specific case
 node ~/.pi/evals/run.js 01-no-slop
 
-# Comparar últimos dos runs
+# Compare the last two runs
 node ~/.pi/evals/run.js --compare
 
-# Evals de extensiones
+# Extension evals
 node ~/.pi/evals/run-extensions.js
 node ~/.pi/evals/run-extensions.js ship
 ```
 
 ### Provider
 
-El runner usa el CLI de pi (`pi --print`) para las llamadas LLM, por lo que respeta el provider y model configurados en `agent/settings.json`. Cambiar de Anthropic a OpenAI, Gemini u otro provider no requiere tocar el runner.
+The runner uses the pi CLI (`pi --print`) for LLM calls, so it respects the provider and model configured in `agent/settings.json`. Switching from Anthropic to OpenAI, Gemini or another provider requires no runner changes.
 
-### Automatización (pre-commit hook)
+### Automation (pre-commit hook)
 
-`.git/hooks/pre-commit` dispara automáticamente los evals relevantes al hacer commit:
+`.git/hooks/pre-commit` automatically triggers the relevant evals on commit:
 
-| Archivo cambiado | Eval | Duración |
+| Changed file | Eval | Duration |
 |---|---|---|
-| `agent/SYSTEM.md` | LLM behavior (6 casos, via pi CLI) | ~3 min |
-| `agent/extensions/*.ts` | Code checks (estructura + invariantes) | ~2s |
+| `agent/SYSTEM.md` | LLM behavior (6 cases, via pi CLI) | ~3 min |
+| `agent/extensions/*.ts` | Code checks (structure + invariants) | ~2s |
 
-Si el score baja del 85%, el commit se bloquea. Para saltarse el check: `git commit --no-verify`.
+If the score drops below 85%, the commit is blocked. To skip the check: `git commit --no-verify`.
 
-### Añadir casos nuevos
+### Adding new cases
 
-Cuando el agente se comporte mal en una sesión real, añade ese caso a `evals/cases/` siguiendo la estructura de los existentes. Los checks pueden ser:
-- `deterministic` — regex sobre la respuesta (sin coste de API)
-- `llm-judge` — el LLM configurado en settings.json evalúa la respuesta con un criterio en lenguaje natural
+When the agent misbehaves in a real session, add that case to `evals/cases/` following the structure of the existing ones. Checks can be:
+- `deterministic` — regex over the response (no API cost)
+- `llm-judge` — the LLM configured in settings.json evaluates the response against a natural-language criterion
 
-Para extensiones, añade los invariantes en `BEHAVIORAL_CHECKS` dentro de `run-extensions.js`.
+For extensions, add the invariants in `BEHAVIORAL_CHECKS` inside `run-extensions.js`.
 
 ## Notes
 
@@ -184,4 +184,4 @@ Para extensiones, añade los invariantes en `BEHAVIORAL_CHECKS` dentro de `run-e
 - Generated images are ignored via `agent/generated-images/`
 - `telegram.json`, `auth.json` and other secrets are gitignored
 - `context-mode/`, `memory/`, `session-search/`, `sessions/` and other runtime dirs are gitignored
-- System prompt (`SYSTEM.md`) is in Spanish — concise, no emojis, no AI filler phrases
+- System prompt (`SYSTEM.md`) is concise, no emojis, no AI filler phrases

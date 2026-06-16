@@ -9,7 +9,7 @@ function run(cmd: string, args: string[]) {
 		const child = spawn(cmd, args, { detached: false, stdio: "ignore" });
 		child.on("error", () => {});
 	} catch {
-		// nunca tirar la sesión
+		// never crash the session
 	}
 }
 

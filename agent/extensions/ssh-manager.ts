@@ -1,17 +1,17 @@
 /**
- * ssh-manager — añade servidores SSH sin que el agente (LLM) vea la contraseña.
+ * ssh-manager — adds SSH servers without the agent (LLM) seeing the password.
  *
- * Comandos:
- *   /ssh-add   Pide alias, user@host, puerto y contraseña (input enmascarado).
- *              Instala tu clave pública en el server con ssh-copy-id (auth por
- *              clave a partir de entonces) y escribe el bloque Host en ~/.ssh/config.
- *              La contraseña se pasa por variable de entorno SSHPASS (no aparece en
- *              `ps`, no se guarda en disco, no entra en el contexto del modelo).
- *   /ssh-list  Lista los servidores definidos en ~/.ssh/config.
+ * Commands:
+ *   /ssh-add   Asks for alias, user@host, port, and password (masked input).
+ *              Installs your public key on the server with ssh-copy-id (key-based
+ *              auth from then on) and writes the Host block to ~/.ssh/config.
+ *              The password is passed through the SSHPASS environment variable (does not appear in
+ *              `ps`, is not saved to disk, does not enter the model context).
+ *   /ssh-list  Lists the servers defined in ~/.ssh/config.
  *
- * Requisitos:
- *   - sshpass instalado (macOS: `brew install hudochenkov/sshpass/sshpass`)
- *   - Una clave SSH (si no tienes: `ssh-keygen -t ed25519`)
+ * Requirements:
+ *   - sshpass installed (macOS: `brew install hudochenkov/sshpass/sshpass`)
+ *   - An SSH key (if you do not have one: `ssh-keygen -t ed25519`)
  */
 
 import { execFile } from "node:child_process";
@@ -105,7 +105,7 @@ function appendHostBlock(alias: string, host: string, user: string, port: string
   }
 }
 
-// Input enmascarado: muestra • por carácter, devuelve la cadena o null si Escape.
+// Masked input: shows • per character, returns the string or null on Escape.
 function maskedInput(ctx: any, label: string): Promise<string | null> {
   return ctx.ui.custom<string | null>((tui: any, theme: any, _kb: any, done: (v: string | null) => void) => {
     let value = "";
@@ -126,7 +126,7 @@ function maskedInput(ctx: any, label: string): Promise<string | null> {
         tui.requestRender();
         return;
       }
-      // Caracteres imprimibles: 1 tecla o pegado de varios. Filtra controles.
+      // Printable characters: 1 key or pasted multiple characters. Filters controls.
       const printable = data.replace(/[\u0000-\u001f\u007f]/g, "");
       if (printable) {
         value += printable;
@@ -139,53 +139,53 @@ function maskedInput(ctx: any, label: string): Promise<string | null> {
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("ssh-add", {
-    description: "Añadir un servidor SSH (instala tu clave, sin que el agente vea la contraseña)",
+    description: "Add an SSH server (installs your key without the agent seeing the password)",
     handler: async (_args, ctx) => {
       if (!ctx.hasUI) {
-        ctx.ui.notify("ssh-add necesita modo interactivo", "error");
+        ctx.ui.notify("ssh-add needs interactive mode", "error");
         return;
       }
 
       const pubKey = findPublicKey();
       if (!pubKey) {
-        ctx.ui.notify("No hay clave pública en ~/.ssh. Genera una: ssh-keygen -t ed25519", "error");
+        ctx.ui.notify("No public key found in ~/.ssh. Generate one: ssh-keygen -t ed25519", "error");
         return;
       }
 
-      // sshpass disponible?
+      // sshpass available?
       const which = await run("which", ["sshpass"]);
       if (which.code !== 0) {
         ctx.ui.notify(
-          "Falta sshpass. Instala: brew install hudochenkov/sshpass/sshpass",
+          "sshpass is missing. Install: brew install hudochenkov/sshpass/sshpass",
           "error",
         );
         return;
       }
 
-      const target = await ctx.ui.input("Servidor (user@host):", "usuario@192.168.1.50");
+      const target = await ctx.ui.input("Server (user@host):", "user@192.168.1.50");
       if (!target || !target.includes("@")) {
-        ctx.ui.notify("Formato inválido, usa user@host", "error");
+        ctx.ui.notify("Invalid format, use user@host", "error");
         return;
       }
       const [user, host] = target.split("@");
 
-      const port = (await ctx.ui.input("Puerto:", "22")) || "22";
+      const port = (await ctx.ui.input("Port:", "22")) || "22";
 
-      const aliasInput = await ctx.ui.input("Alias (Enter = usar el host):", host);
+      const aliasInput = await ctx.ui.input("Alias (Enter = use the host):", host);
       const alias = aliasInput && aliasInput.trim() ? aliasInput.trim() : host;
 
       if (aliasExists(alias)) {
-        const ok = await ctx.ui.confirm("Alias existe", `"${alias}" ya está en config. ¿Continuar igual?`);
+        const ok = await ctx.ui.confirm("Alias exists", `"${alias}" is already in config. Continue anyway?`);
         if (!ok) return;
       }
 
-      const password = await maskedInput(ctx, "Contraseña SSH:");
+      const password = await maskedInput(ctx, "SSH password:");
       if (password === null) {
-        ctx.ui.notify("Cancelado", "info");
+        ctx.ui.notify("Canceled", "info");
         return;
       }
 
-      ctx.ui.setStatus("ssh-add", "Instalando clave...");
+      ctx.ui.setStatus("ssh-add", "Installing key...");
       const res = await run(
         "sshpass",
         [
@@ -204,21 +204,21 @@ export default function (pi: ExtensionAPI) {
       ctx.ui.setStatus("ssh-add", undefined);
 
       if (res.code !== 0) {
-        ctx.ui.notify(`Error instalando la clave: ${res.stderr.trim().split("\n").pop()}`, "error");
+        ctx.ui.notify(`Error installing the key: ${res.stderr.trim().split("\n").pop()}`, "error");
         return;
       }
 
       appendHostBlock(alias, host, user, port);
-      ctx.ui.notify(`Listo. Conéctate con: ssh ${alias}  (ya sin contraseña)`, "info");
+      ctx.ui.notify(`Done. Connect with: ssh ${alias}  (now without password)`, "info");
     },
   });
 
   pi.registerCommand("ssh-list", {
-    description: "Listar los servidores SSH de ~/.ssh/config",
+    description: "List the SSH servers in ~/.ssh/config",
     handler: async (_args, ctx) => {
       const hosts = parseHosts();
       if (hosts.length === 0) {
-        ctx.ui.notify("No hay servidores en ~/.ssh/config", "info");
+        ctx.ui.notify("No servers in ~/.ssh/config", "info");
         return;
       }
       if (!ctx.hasUI) {
@@ -229,12 +229,12 @@ export default function (pi: ExtensionAPI) {
         (h) =>
           `${h.alias}  →  ${h.user ? h.user + "@" : ""}${h.hostName ?? "?"}${h.port ? ":" + h.port : ""}`,
       );
-      const choice = await ctx.ui.select("Servidores SSH (Enter para copiar comando):", options);
+      const choice = await ctx.ui.select("SSH servers (Enter to copy command):", options);
       if (choice) {
         const idx = options.indexOf(choice);
         const h = hosts[idx];
         ctx.ui.setEditorText(`ssh ${h.alias}`);
-        ctx.ui.notify(`Comando puesto en el editor: ssh ${h.alias}`, "info");
+        ctx.ui.notify(`Command placed in the editor: ssh ${h.alias}`, "info");
       }
     },
   });

@@ -1,6 +1,6 @@
 /**
- * autodiscover.ts — inyecta automáticamente en el system prompt
- * las extensiones instaladas en ~/.pi/agent/extensions/
+ * autodiscover.ts — automatically injects into the system prompt
+ * the extensions installed in ~/.pi/agent/extensions/
  *
  * Hook: before_agent_start
  */
@@ -64,7 +64,7 @@ export default function (pi: ExtensionAPI) {
 
       return { systemPrompt };
     } catch {
-      // Silencioso — no romper la sesión si falla el scan
+      // Silent — don't crash the session if the scan fails
     }
   });
 }

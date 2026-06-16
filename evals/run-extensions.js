@@ -2,7 +2,7 @@
 
 /**
  * Extension Evals
- * Testea extensiones handmade: compilación TS + comportamientos críticos
+ * Tests handmade extensions: TS compilation + critical behaviors
  *
  * Uso:
  *   node ~/.pi/evals/run-extensions.js
@@ -30,9 +30,9 @@ function checkTypeScript(file) {
     // Si no lanza, al menos parsea
     return { passed: true, detail: 'Importa sin errores' };
   } catch (e) {
-    // Los .ts necesitan transpilación — chequeamos sintaxis con acorn o simplemente
-    // verificamos que el archivo exista y no esté vacío
-    return { passed: true, detail: 'Skip (requiere transpilación TS)' };
+    // .ts files need transpilation — we check syntax with acorn or simply
+    // verify the file exists and is not empty
+    return { passed: true, detail: 'Skip (requires TS transpilation)' };
   }
 }
 
@@ -40,7 +40,7 @@ function checkFileSyntax(file) {
   const fullPath = path.join(EXTENSIONS_DIR, file);
   try {
     const content = fs.readFileSync(fullPath, 'utf8');
-    // Checks básicos de sintaxis TypeScript vía heurísticas
+    // Basic TypeScript syntax checks via heuristics
     const issues = [];
     // Detectar funciones sin export default
     if (content.includes('export default function') === false && 
@@ -87,7 +87,7 @@ const BEHAVIORAL_CHECKS = {
     },
     {
       name: 'ssh_to_https',
-      description: 'Convierte SSH remotes a HTTPS para el output',
+      description: 'Converts SSH remotes to HTTPS for the output',
       check: content => /SSH.*HTTPS|git@.*https/i.test(content),
     },
   ],
@@ -99,17 +99,17 @@ const BEHAVIORAL_CHECKS = {
     },
     {
       name: 'adversarial_pattern',
-      description: 'Implementa patrón adversarial',
+      description: 'Implements adversarial pattern',
       check: content => content.includes('adversarial'),
     },
     {
       name: 'tournament_pattern',
-      description: 'Implementa patrón tournament',
+      description: 'Implements tournament pattern',
       check: content => content.includes('tournament'),
     },
     {
       name: 'loop_pattern',
-      description: 'Implementa patrón loop',
+      description: 'Implements loop pattern',
       check: content => content.includes('loop'),
     },
     {
