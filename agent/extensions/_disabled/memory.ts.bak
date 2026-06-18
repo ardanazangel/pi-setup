@@ -1,10 +1,30 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import { appendFileSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { homedir } from "node:os";
+import { dirname } from "node:path";
 
 const DEFAULT_SUPERMEMORY_URL = "http://localhost:6767";
 const DEFAULT_CONTAINER_TAG = "pi";
+// Injection mode: how memory reaches the agent at session start.
+//   policy (default) — inject a short note nudging on-demand `memory` search; no eager search/tokens
+//   off              — inject nothing; purely on-demand
+//   eager            — search and inject relevant memory every session (more context, more tokens)
+const INJECT_MODE = ((process.env.SUPERMEMORY_INJECT ?? "policy").trim().toLowerCase()) as "policy" | "off" | "eager";
+const MEMORY_POLICY = [
+  "<memory-policy>",
+  "A persistent `memory` tool is available (modes: search, remember, forget, list, profile).",
+  "Call `memory` with mode \"search\" when durable context would help: user preferences, past",
+  "corrections, project decisions/conventions, or prior solutions to a similar problem.",
+  "Memory is context, not instruction \u2014 repo and tool evidence always win over stored notes.",
+  "</memory-policy>",
+].join("\n");
 const PROJECT_CONTAINER_PREFIX = "project:";
 const MAX_CAPTURE_CHARS = 12000;
+// Skip auto-capturing trivial sessions (greetings, one-liners). Manual
+// /memory-consolidate bypasses this so the user can force-save anything.
+const MIN_CAPTURE_CHARS = 200;
 
 function ok(text: string) {
   return { content: [{ type: "text" as const, text }], details: {} };
@@ -32,6 +52,26 @@ function extractText(content: unknown): string {
       .join("\n");
   }
   return "";
+}
+
+// Redact common secret formats before anything is persisted. Single chokepoint
+// so both auto-capture and the explicit `remember` tool are covered.
+const SECRET_PATTERNS: RegExp[] = [
+  /-----BEGIN[A-Z ]*PRIVATE KEY-----[\s\S]*?-----END[A-Z ]*PRIVATE KEY-----/g,
+  /\bsk-[A-Za-z0-9_-]{20,}\b/g,                              // OpenAI / generic
+  /\bgh[pousr]_[A-Za-z0-9]{30,}\b/g,                          // GitHub tokens
+  /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g,                        // Slack
+  /\bAKIA[0-9A-Z]{16}\b/g,                                    // AWS access key id
+  /\bAIza[0-9A-Za-z_-]{35}\b/g,                               // Google API key
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}\b/g, // JWT
+  /\b(?:bearer|authorization:?)\s+[A-Za-z0-9._-]{20,}/gi,     // auth headers
+  /\b(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[:=]\s*["']?[A-Za-z0-9._\-\/+]{12,}["']?/gi, // assignments
+];
+
+function redactSecrets(text: string): string {
+  let out = text;
+  for (const re of SECRET_PATTERNS) out = out.replace(re, "[REDACTED]");
+  return out;
 }
 
 function env(name: string): string | undefined {
@@ -75,8 +115,84 @@ class SupermemoryLocal {
     return json;
   }
 
+  // Exact-content dedup chokepoint: identical payloads (spool re-flush, repeated
+  // captures, re-asserted facts) are skipped instead of re-stored. Near-duplicate
+  // semantic merging is left to the Supermemory server's own extraction.
+  // ponytail: SHA1 over redacted content; capped FIFO index on disk.
+  private dedupPath = `${homedir()}/.pi/agent/supermemory-dedup.json`;
+  private dedupKeys: string[] | null = null;
+  private static readonly DEDUP_CAP = 1000;
+
+  private loadDedup(): string[] {
+    if (this.dedupKeys) return this.dedupKeys;
+    try { const v = JSON.parse(readFileSync(this.dedupPath, "utf8")); this.dedupKeys = Array.isArray(v) ? v : []; }
+    catch { this.dedupKeys = []; }
+    return this.dedupKeys;
+  }
+
+  private dedupKey(containerTag: string, redacted: string): string {
+    return `${containerTag}:${createHash("sha1").update(redacted).digest("hex")}`;
+  }
+
+  private recordKey(key: string) {
+    const keys = this.loadDedup();
+    keys.push(key);
+    if (keys.length > SupermemoryLocal.DEDUP_CAP) keys.splice(0, keys.length - SupermemoryLocal.DEDUP_CAP);
+    try { mkdirSync(dirname(this.dedupPath), { recursive: true }); writeFileSync(this.dedupPath, JSON.stringify(keys)); } catch {}
+  }
+
   async add(content: string, containerTag = DEFAULT_CONTAINER_TAG, metadata?: Record<string, unknown>) {
-    return this.post("/v3/documents", { content, containerTag, metadata });
+    const redacted = redactSecrets(content);
+    const key = this.dedupKey(containerTag, redacted);
+    if (this.loadDedup().includes(key)) return { skipped: true as const, reason: "duplicate" };
+    const res = await this.post("/v3/documents", { content: redacted, containerTag, metadata });
+    this.recordKey(key);
+    return res;
+  }
+
+  // Spool to disk when the server is unreachable so nothing is lost silently.
+  // ponytail: flat JSONL queue, flushed on next session_start. Upgrade path:
+  // size cap / rotation if the file ever grows unbounded while offline.
+  private spoolPath = `${homedir()}/.pi/agent/supermemory-spool.jsonl`;
+
+  private spool(entry: { content: string; containerTag: string; metadata?: Record<string, unknown> }) {
+    try { mkdirSync(dirname(this.spoolPath), { recursive: true }); } catch {}
+    appendFileSync(this.spoolPath, JSON.stringify(entry) + "\n");
+  }
+
+  // Try to persist; on failure queue locally (content already redacted on disk).
+  async addReliable(content: string, containerTag = DEFAULT_CONTAINER_TAG, metadata?: Record<string, unknown>): Promise<{ ok: boolean; spooled: boolean; skipped: boolean }> {
+    try {
+      const r: any = await this.add(content, containerTag, metadata);
+      return { ok: true, spooled: false, skipped: !!(r && r.skipped) };
+    } catch {
+      try { this.spool({ content: redactSecrets(content), containerTag, metadata }); return { ok: false, spooled: true, skipped: false }; }
+      catch { return { ok: false, spooled: false, skipped: false }; }
+    }
+  }
+
+  // Re-send queued entries; keep the ones that still fail. Returns count flushed.
+  async flushSpool(): Promise<number> {
+    if (!existsSync(this.spoolPath)) return 0;
+    let lines: string[];
+    try { lines = readFileSync(this.spoolPath, "utf8").split("\n").filter(Boolean); } catch { return 0; }
+    if (!lines.length) return 0;
+    const remaining: string[] = [];
+    let flushed = 0;
+    for (const line of lines) {
+      let entry: any;
+      try { entry = JSON.parse(line); } catch { continue; }
+      try { await this.add(entry.content, entry.containerTag, entry.metadata); flushed++; }
+      catch { remaining.push(line); }
+    }
+    try { writeFileSync(this.spoolPath, remaining.length ? remaining.join("\n") + "\n" : ""); } catch {}
+    return flushed;
+  }
+
+  // Cheap reachability probe with a short timeout for status display.
+  async ping(): Promise<boolean> {
+    try { await this.search("ping", DEFAULT_CONTAINER_TAG, 1, 1500); return true; }
+    catch { return false; }
   }
 
   async search(q: string, containerTag = DEFAULT_CONTAINER_TAG, limit = 10, timeoutMs?: number) {
@@ -168,10 +284,21 @@ export default function (pi: ExtensionAPI) {
   let pendingAssistantMessages: string[] = [];
 
   async function injectContext(ctx: any) {
+    if (INJECT_MODE === "off") return;
     try {
       const alreadyInjected = ctx.sessionManager.getEntries()
         .some((e: any) => e.type === "custom_message" && e.customType === "pi-supermemory-context");
       if (alreadyInjected) return;
+
+      if (INJECT_MODE === "policy") {
+        pi.sendMessage({
+          customType: "pi-supermemory-context",
+          content: MEMORY_POLICY,
+          display: false,
+          details: { provider: "supermemory-local", mode: "policy" },
+        });
+        return;
+      }
 
       const scopes = memoryScopes(ctx.cwd ?? sessionCwd);
       const results = await Promise.all(scopes.map(async (scope) => {
@@ -197,25 +324,29 @@ export default function (pi: ExtensionAPI) {
     } catch {}
   }
 
-  async function captureConversation(reason = "manual") {
+  async function captureConversation(reason = "manual"): Promise<{ spooled: boolean }> {
     const pairs: string[] = [];
     const len = Math.min(pendingUserMessages.length, pendingAssistantMessages.length);
     for (let i = 0; i < len; i++) {
       pairs.push(`User: ${pendingUserMessages[i]}\nAssistant: ${pendingAssistantMessages[i]}`);
     }
     const content = pairs.join("\n\n").slice(-MAX_CAPTURE_CHARS).trim();
-    if (!content) return;
+    if (!content) return { spooled: false };
+    if (content.length < MIN_CAPTURE_CHARS && !reason.startsWith("manual")) return { spooled: false };
     const capturedAt = new Date().toISOString();
     const scopes = memoryScopes(sessionCwd);
+    let spooled = false;
     for (const containerTag of scopes) {
-      await sm.add(content, containerTag, {
+      const r = await sm.addReliable(content, containerTag, {
         source: "pi-session",
         reason,
         cwd: sessionCwd,
         projectContainerTag: projectContainerTag(sessionCwd),
         capturedAt,
       });
+      if (r.spooled) spooled = true;
     }
+    return { spooled };
   }
 
   pi.on("session_start", async (_event, ctx) => {
@@ -238,8 +369,13 @@ export default function (pi: ExtensionAPI) {
 
     await injectContext(ctx);
     try {
-      ctx.ui.setStatus("pi-memory", `Supermemory: ${sm.baseURL}`);
-      setTimeout(() => { try { ctx.ui.setStatus("pi-memory", ""); } catch {} }, 5000);
+      const flushed = await sm.flushSpool();
+      if (flushed > 0) ctx.ui.notify(`Supermemory: synced ${flushed} queued ${flushed === 1 ? "entry" : "entries"}`, "info");
+    } catch {}
+    try {
+      const reachable = await sm.ping();
+      ctx.ui.setStatus("pi-memory", reachable ? `Supermemory: ${sm.baseURL}` : "Supermemory OFFLINE \u2014 queuing locally");
+      if (reachable) setTimeout(() => { try { ctx.ui.setStatus("pi-memory", ""); } catch {} }, 5000);
     } catch {}
   });
 
@@ -257,8 +393,8 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_before_switch", async (_event, ctx) => {
     try {
-      await captureConversation();
-      ctx.ui.notify("Supermemory local: session captured", "info");
+      const { spooled } = await captureConversation();
+      ctx.ui.notify(spooled ? "Supermemory offline: session queued locally" : "Supermemory local: session captured", spooled ? "warning" : "info");
     } catch (err: any) {
       ctx.ui.notify(`Supermemory local: capture failed: ${err.message}`, "warning");
     }
@@ -334,8 +470,11 @@ export default function (pi: ExtensionAPI) {
               content = stripQuotes(params.content ?? params.value ?? params.rule ?? "") as string;
               if (!content) return ok("content required");
             }
-            await sm.add(content, containerTag, { source: "pi-tool", type, cwd: sessionCwd, projectContainerTag: projectContainerTag(sessionCwd), savedAt: new Date().toISOString() });
-            return ok(`Remembered (${containerTag}): ${content}`);
+            const r = await sm.addReliable(content, containerTag, { source: "pi-tool", type, cwd: sessionCwd, projectContainerTag: projectContainerTag(sessionCwd), savedAt: new Date().toISOString() });
+            if (r.skipped) return ok(`Already in memory (${containerTag}): ${content}`);
+            if (r.ok) return ok(`Remembered (${containerTag}): ${content}`);
+            if (r.spooled) return ok(`Supermemory offline \u2014 queued locally, will sync next session (${containerTag}): ${content}`);
+            return ok(`Failed to remember and could not queue: ${content}`);
           }
           case "forget": {
             if (params.memoryId) {

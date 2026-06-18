@@ -33,8 +33,8 @@ type ParsedCodexResponse = {
 
 const TOOL_PARAMS = Type.Object({
 	prompt: Type.String({ description: "Image prompt. Be specific about subject, composition, style, text, and constraints." }),
-	model: Type.Optional(Type.String({ description: `Codex routing model. Defaults to ${DEFAULT_MODEL}.` })),
-	outputFormat: Type.Optional(StringEnum(OUTPUT_FORMATS)),
+	model: Type.Optional(Type.String({ description: `Codex routing model. Leave unset unless the user names a specific model; defaults to ${DEFAULT_MODEL}.` })),
+	outputFormat: Type.Optional(StringEnum(OUTPUT_FORMATS, { default: "png", description: "Output image format. Defaults to png. Use jpeg for photos to shrink size, webp for web delivery, png when transparency or max quality matters." })),
 });
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -174,7 +174,7 @@ export default function codexImage(pi: any) {
 	pi.registerTool({
 		name: "codex_image",
 		label: "codex-image",
-		description: "Generate images through the ChatGPT/Codex image_generation backend using the existing openai-codex login.",
+		description: "Generate a bitmap image from a text prompt via the ChatGPT/Codex image_generation backend, using the existing openai-codex login. Use ONLY when the user explicitly asks to create, generate, draw, or render an image; never call it to illustrate an answer unprompted. Returns the image inline and saves it to the agent directory. Requires a ChatGPT Plus/Pro (Codex) login.",
 		promptSnippet: "Use codex_image to generate bitmap images through ChatGPT/Codex when explicitly requested.",
 		parameters: TOOL_PARAMS,
 		executionMode: "parallel",

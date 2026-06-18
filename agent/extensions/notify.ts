@@ -38,6 +38,8 @@ export default function notifyExtension(pi: any) {
 		if (turnStart === null) return;
 		const elapsed = (Date.now() - turnStart) / 1000;
 		turnStart = null;
+		// Dentro de Superset, su propia chime ya avisa — no duplicar.
+		if (process.env.SUPERSET_TERMINAL_ID) return;
 		if (elapsed >= NOTIFY_MIN_SECONDS) notify(elapsed);
 	});
 

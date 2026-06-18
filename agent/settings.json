@@ -7,7 +7,6 @@
   "extensions": [
     "~/.pi/agent/extensions/codex-image.ts",
     "~/.pi/agent/extensions/context-viewer.ts",
-    "~/.pi/agent/extensions/memory.ts",
     "~/.pi/agent/extensions/notify.ts",
     "~/.pi/agent/extensions/questionnaire.ts",
     "~/.pi/agent/extensions/ssh-manager.ts",
@@ -19,7 +18,7 @@
   "images": {
     "blockImages": false
   },
-  "lastChangelogVersion": "0.79.4",
+  "lastChangelogVersion": "0.79.6",
   "memory": {
     "consolidationModel": "gpt-5.5"
   },
@@ -27,7 +26,8 @@
     "npm:pi-hashline-edit",
     "npm:@ff-labs/pi-fff",
     "npm:@ollama/pi-web-search",
-    "npm:pi-rtk-optimizer"
+    "npm:pi-rtk-optimizer",
+    "npm:pi-hermes-memory"
   ],
   "plugins": [],
   "quietStartup": false,

@@ -1,0 +1,11 @@
+{
+  "memoryMode": "legacy-inject",
+  "memoryPolicyStyle": "compact",
+  "reviewEnabled": true,
+  "nudgeInterval": 10,
+  "failureInjectionEnabled": true,
+  "correctionDetection": true,
+  "autoConsolidate": true,
+  "flushOnShutdown": true,
+  "flushOnCompact": true
+}
