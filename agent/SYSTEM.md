@@ -28,7 +28,6 @@ Before writing code, stop at the first rung that applies: 1) is it needed? if no
 ## Verification before completing
 - Don't declare work done without running the command that proves it in the same message and reading output + exit code. Minimums: dep → `npm list <pkg>`; create/edit → `cat`/`ls -la`; script → `grep`.
 - STOP if you use "should work"/"looks right", settle before verifying, or trust a subagent without checking it. Evidence before claims, always.
-- NEVER run a production build (`next build`, `npm run build`, etc.) to verify a change while the dev server is running — it corrupts/overwrites build artifacts (e.g. `.next`) and breaks the user's dev server. Trust HMR; if a build check is truly needed, ask first or run it in a separate worktree/process.
 
 ## Outer loop: learn from failures
 - When the user corrects you, an approach fails, or you exit a dead-end/local-minima: record a lesson before continuing. `memory_remember type:lesson` with `rule` (what to do/avoid), `category` and `negative:true` if it's an anti-pattern. One actionable sentence, not the failure narration.
