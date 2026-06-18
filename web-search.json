@@ -1,7 +1,0 @@
-{
-  "allowBrowserCookies": true,
-  "youtube": {
-    "preferredModel": "gemini-2.5-flash"
-  },
-  "provider": "gemini"
-}

@@ -1,15 +1,15 @@
-node_modules/
-**/node_modules/
-.DS_Store
+# Ignore everything at root, only track agent/ and this file
+/*
+!/.gitignore
+!/agent/
 
-# Sensible
+# Within agent/: sensitive
 agent/auth.json
 agent/.env
-.env
 agent/mcp-oauth/
 agent/telegram.json
 
-# Runtime / cache
+# Within agent/: runtime / cache
 agent/locks.json
 agent/mcp-cache.json
 agent/mcp-npx-cache.json
@@ -24,20 +24,10 @@ agent/packages/
 agent/npm/
 agent/generated-images/
 agent/fff/
-.supermemory/
 
-# context-mode runtime
-context-mode/
-memory/
-pi-acp/
-scheduler/
-session-search/
-.pi/deltalog/
+# node_modules anywhere
+**/node_modules/
 
-# misc
+# logs
 **/*.log
-package-lock.json
-**/package-lock.json
-MAIL/token.json
-NEWS/
-evals/results/
+**/.DS_Store
